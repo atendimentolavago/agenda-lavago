@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LavaGo — Agenda dos Lavadores</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3344;
+  --text: #e8eaf0;
+  --text2: #8b90a0;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --green: #22c55e;
+  --green-bg: #22c55e15;
+  --orange: #f59e0b;
+  --orange-bg: #f59e0b12;
+  --red: #ef4444;
+  --red-bg: #ef444415;
+  --radius: 10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* PIN */
+#pin-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:20px; }
+.pin-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:48px 40px; text-align:center; max-width:380px; width:100%; }
+.pin-logo { font-size:28px; font-weight:700; margin-bottom:8px; }
+.pin-logo span { color:var(--accent); }
+.pin-subtitle { color:var(--text2); font-size:14px; margin-bottom:32px; }
+.pin-input { display:flex; gap:10px; justify-content:center; margin-bottom:24px; }
+.pin-input input { width:52px; height:60px; background:var(--surface2); border:2px solid var(--border); border-radius:12px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:24px; text-align:center; outline:none; transition:border-color .2s; }
+.pin-input input:focus { border-color:var(--accent); }
+.pin-error { color:var(--red); font-size:13px; min-height:20px; margin-bottom:8px; }
+
+/* BUTTONS */
+.btn-primary { background:var(--accent); color:white; border:none; border-radius:var(--radius); padding:12px 32px; font-family:'DM Sans',sans-serif; font-size:15px; font-weight:600; cursor:pointer; transition:background .2s; width:100%; }
+.btn-primary:hover { background:var(--accent-hover); }
+.btn-green { background:var(--green); color:#0a1628; border:none; border-radius:var(--radius); padding:14px 32px; font-family:'DM Sans',sans-serif; font-size:16px; font-weight:700; cursor:pointer; width:100%; transition:all .2s; }
+.btn-green:hover { background:#16a34a; }
+.btn-secondary { background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:var(--radius); padding:12px 24px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all .2s; }
+.btn-secondary:hover { border-color:var(--text2); }
+.btn-copy { background:var(--accent); color:white; border:none; border-radius:var(--radius); padding:12px 24px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; flex:1; transition:all .2s; }
+.btn-copy:hover { background:var(--accent-hover); }
+.btn-copy.copied { background:var(--green); color:#0a1628; }
+.btn-logout { background:var(--surface2); border:1px solid var(--border); color:var(--text2); padding:8px 16px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer; }
+.btn-logout:hover { color:var(--text); border-color:var(--text2); }
+
+/* APP */
+#app-screen { display:none; }
+.app-header { background:var(--surface); border-bottom:1px solid var(--border); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+.app-title { font-size:20px; font-weight:700; }
+.app-title span { color:var(--accent); }
+.app-body { max-width:960px; margin:0 auto; padding:24px; }
+
+/* SECTIONS */
+.section-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:20px; }
+.section-title { font-size:16px; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+.section-title .num { background:var(--accent); color:white; min-width:24px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+.section-desc { color:var(--text2); font-size:13px; margin-bottom:16px; line-height:1.5; }
+
+/* FORMS */
+label { font-size:12px; font-weight:500; color:var(--text2); text-transform:uppercase; letter-spacing:.5px; }
+input,select,textarea { background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:14px; padding:10px 12px; outline:none; transition:border-color .2s; width:100%; }
+input:focus,select:focus,textarea:focus { border-color:var(--accent); }
+
+/* PASTE */
+.paste-area { min-height:160px; border:2px dashed var(--border); border-radius:12px; background:var(--bg); padding:16px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text); line-height:1.6; transition:all .2s; resize:vertical; width:100%; }
+.paste-area:focus { border-color:var(--accent); }
+.paste-area::placeholder { color:var(--text2); opacity:.5; }
+
+/* CHECKBOXES */
+.checkbox-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.checkbox-row input[type="checkbox"] { width:18px; height:18px; accent-color:var(--accent); cursor:pointer; flex-shrink:0; }
+.checkbox-row label { font-size:14px; text-transform:none; letter-spacing:0; color:var(--text); cursor:pointer; }
+.extra-input { margin-top:8px; margin-bottom:8px; display:none; }
+.extra-input.show { display:block; }
+
+/* PARSED RESULT */
+.parse-result { margin-top:16px; display:none; }
+.parse-result.show { display:block; }
+.parse-badge { display:inline-flex; align-items:center; gap:6px; padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; margin-bottom:12px; }
+.parse-badge.success { background:var(--green-bg); color:var(--green); border:1px solid #22c55e25; }
+.parse-badge.error { background:var(--red-bg); color:var(--red); border:1px solid #ef444425; }
+.parse-badge.warning { background:var(--orange-bg); color:var(--orange); border:1px solid #f59e0b25; }
+
+/* PREVIEW TABLE */
+.preview-table { width:100%; border-collapse:collapse; font-size:13px; }
+.preview-table th { text-align:left; padding:8px 10px; background:var(--surface2); color:var(--text2); font-size:11px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+.preview-table td { padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+.preview-table tr:last-child td { border-bottom:none; }
+.preview-table .obs-cell { font-size:12px; color:var(--orange); }
+.preview-table .filtered { color:var(--text2); font-size:11px; font-style:italic; }
+
+/* OUTPUT */
+.output-box { background:var(--bg); border:1px solid var(--border); border-radius:12px; padding:20px; font-size:14px; line-height:1.8; white-space:pre-wrap; word-break:break-word; max-height:500px; overflow-y:auto; }
+.output-actions { display:flex; gap:10px; margin-top:16px; }
+
+/* MULTI OUTPUT */
+.washer-output { margin-bottom:20px; }
+.washer-output-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; padding:10px 14px; background:var(--surface2); border-radius:8px; }
+.washer-output-name { font-weight:600; font-size:15px; }
+.washer-output-count { color:var(--text2); font-size:13px; }
+
+/* TOAST */
+.toast { position:fixed; bottom:24px; right:24px; background:var(--green); color:#0a1628; padding:12px 20px; border-radius:10px; font-weight:600; font-size:14px; transform:translateY(80px); opacity:0; transition:all .3s ease; z-index:1000; }
+.toast.show { transform:translateY(0); opacity:1; }
+
+/* TABS */
+.tab-bar { display:flex; gap:4px; margin-bottom:16px; background:var(--bg); border-radius:10px; padding:4px; }
+.tab-btn { flex:1; padding:10px 16px; border:none; background:transparent; color:var(--text2); font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; cursor:pointer; border-radius:8px; transition:all .2s; }
+.tab-btn.active { background:var(--surface2); color:var(--text); font-weight:600; }
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+@media(max-width:600px) {
+  .app-body { padding:16px; }
+  .section-card { padding:16px; }
+  .pin-card { padding:32px 24px; }
+  .output-actions { flex-direction:column; }
+  .preview-table { font-size:11px; }
+  .preview-table th, .preview-table td { padding:6px; }
+}
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div id="pin-screen">
+  <div class="pin-card">
+    <div class="pin-logo">Lava<span>Go</span></div>
+    <div class="pin-subtitle">Gerador de Agenda</div>
+    <div class="pin-input">
+      <input type="tel" maxlength="1" id="p1" autofocus>
+      <input type="tel" maxlength="1" id="p2">
+      <input type="tel" maxlength="1" id="p3">
+      <input type="tel" maxlength="1" id="p4">
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn-primary" onclick="checkPin()">Entrar</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <div class="app-header">
+    <div class="app-title">Lava<span>Go</span> — Agenda</div>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+  <div class="app-body">
+
+    <!-- STEP 1: COLAR -->
+    <div class="section-card">
+      <div class="section-title"><span class="num">1</span> Colar Dados do Google Sheets</div>
+      <div class="section-desc">Selecione as linhas dos serviços na planilha (sem o cabeçalho), copie (Ctrl+C) e cole abaixo (Ctrl+V). Cada linha = 1 serviço.</div>
+      <textarea class="paste-area" id="paste-area" placeholder="Cole aqui os dados copiados do Google Sheets...&#10;&#10;Dica: selecione todas as linhas dos serviços do dia, copie e cole aqui." oninput="autoParse()"></textarea>
+      <div class="parse-result" id="parse-result"></div>
+    </div>
+
+    <!-- STEP 2: OPÇÕES -->
+    <div class="section-card" id="step2" style="display:none">
+      <div class="section-title"><span class="num">2</span> Opções da Agenda</div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="chk-aguardando">
+        <label for="chk-aguardando">Estamos aguardando novos agendamentos para completar a agenda</label>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="chk-deslocamento" onchange="document.getElementById('desl-val').classList.toggle('show',this.checked)">
+        <label for="chk-deslocamento">Essa agenda terá ajuda de deslocamento</label>
+      </div>
+      <div class="extra-input" id="desl-val">
+        <label>Valor (opcional)</label>
+        <input type="text" id="deslocamento-amount" placeholder="Ex: R$ 15,00" style="max-width:200px;margin-top:4px">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="chk-custom" onchange="document.getElementById('custom-val').classList.toggle('show',this.checked)">
+        <label for="chk-custom">Mensagem extra personalizada</label>
+      </div>
+      <div class="extra-input" id="custom-val">
+        <label>Mensagem</label>
+        <input type="text" id="custom-msg" placeholder="Ex: Agenda preliminar" style="margin-top:4px">
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn-green" onclick="generateAll()">✅ Gerar Agenda(s)</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: OUTPUT -->
+    <div class="section-card" id="step3" style="display:none">
+      <div class="section-title"><span class="num">3</span> Mensagens Prontas</div>
+      <div class="section-desc">Cada lavador tem sua mensagem separada. Copie e envie via WhatsApp.</div>
+      <div id="output-container"></div>
+      <div style="margin-top:16px">
+        <button class="btn-secondary" onclick="resetAll()">↺ Nova Agenda</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Copiado!</div>
+
+<script>
+// ===== CONFIG =====
+const CORRECT_PIN = '2025';
+
+// Column indices (0-based) after tab split
+const COL = {
+  CONCAT: 0,
+  PRESTADOR: 1,     // washer name
+  RG_PREST: 2,
+  HORARIO: 3,       // "13/02 às 08:15"
+  NOME_CLI: 4,      // client name
+  TEL_CLI: 5,
+  ENDERECO: 6,
+  LAVAGEM: 7,       // wash type
+  VEICULO: 8,
+  STATUS: 9,
+  ID_USER: 10,
+  VALOR: 11,        // NEVER show
+  RESERVADO: 12,    // plan type - NEVER show
+  TIPO_VEIC: 13,
+  TEL_HOR: 14,
+  PREST2: 15,
+  RG_PREST2: 16,
+  OBS: 17,          // observations
+  CONDO: 18,        // condominium
+  VOLTAGEM: 19,     // voltage
+  CALIBR: 20,
+  CPF: 21,
+  VALOR_DEV: 22,    // NEVER
+  CUSTO_LAV: 23,    // NEVER
+  IMPOSTO: 24,      // NEVER
+  NF_STATUS: 25
+};
+
+// Clock emojis
+const CLOCKS = {
+  '07:00':'🕖','07:15':'🕖','07:30':'🕖','07:45':'🕖',
+  '08:00':'🕗','08:15':'🕗','08:30':'🕣','08:45':'🕗',
+  '09:00':'🕘','09:15':'🕘','09:30':'🕤','09:45':'🕘',
+  '10:00':'🕙','10:15':'🕙','10:30':'🕥','10:45':'🕙',
+  '11:00':'🕚','11:15':'🕦','11:30':'🕦','11:45':'🕦',
+  '12:00':'🕛','12:15':'🕧','12:30':'🕧','12:45':'🕧',
+  '13:00':'🕐','13:15':'🕐','13:30':'🕜','13:45':'🕐',
+  '14:00':'🕑','14:15':'🕑','14:30':'🕝','14:45':'🕑',
+  '15:00':'🕒','15:15':'🕒','15:30':'🕞','15:45':'🕒',
+  '16:00':'🕓','16:15':'🕟','16:30':'🕟','16:45':'🕓',
+  '17:00':'🕔','17:15':'🕔','17:30':'🕠','17:45':'🕔',
+  '18:00':'🕕','18:15':'🕕','18:30':'🕡','18:45':'🕕',
+};
+
+let parsedServices = [];
+
+// ===== PIN =====
+document.querySelectorAll('.pin-input input').forEach((inp,i,arr) => {
+  inp.addEventListener('input', () => { if(inp.value.length===1 && i<arr.length-1) arr[i+1].focus(); });
+  inp.addEventListener('keydown', (e) => {
+    if(e.key==='Backspace' && inp.value==='' && i>0) arr[i-1].focus();
+    if(e.key==='Enter') checkPin();
+  });
+});
+
+function checkPin() {
+  const pin = ['p1','p2','p3','p4'].map(id=>document.getElementById(id).value).join('');
+  if(pin===CORRECT_PIN) {
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+  } else {
+    document.getElementById('pin-error').textContent='PIN incorreto.';
+    document.querySelectorAll('.pin-input input').forEach(i=>{i.value='';});
+    document.getElementById('p1').focus();
+  }
+}
+
+function logout() {
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
+  document.querySelectorAll('.pin-input input').forEach(i=>{i.value='';});
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('p1').focus();
+}
+
+// ===== PARSE =====
+function autoParse() {
+  const raw = document.getElementById('paste-area').value;
+  const resultDiv = document.getElementById('parse-result');
+
+  if(!raw.trim()) {
+    resultDiv.classList.remove('show');
+    document.getElementById('step2').style.display='none';
+    document.getElementById('step3').style.display='none';
+    parsedServices = [];
+    return;
+  }
+
+  // Split by newlines, filter empty
+  const lines = raw.split('\n').filter(l => l.trim() !== '' && l.includes('\t'));
+
+  if(lines.length === 0) {
+    resultDiv.innerHTML = `<div class="parse-badge error">⚠️ Nenhum dado reconhecido. Certifique-se de copiar direto do Google Sheets.</div>`;
+    resultDiv.classList.add('show');
+    document.getElementById('step2').style.display='none';
+    return;
+  }
+
+  parsedServices = [];
+  let errors = [];
+
+  lines.forEach((line, idx) => {
+    const cols = line.split('\t');
+
+    // Need at least enough columns to get the essentials
+    if(cols.length < 9) {
+      errors.push(`Linha ${idx+1}: apenas ${cols.length} colunas (mínimo 9)`);
+      return;
+    }
+
+    const horarioRaw = (cols[COL.HORARIO] || '').trim();
+    const prestador = (cols[COL.PRESTADOR] || '').trim();
+    const cliente = (cols[COL.NOME_CLI] || '').trim();
+    const endereco = (cols[COL.ENDERECO] || '').trim();
+    const lavagem = (cols[COL.LAVAGEM] || '').trim();
+    const veiculo = (cols[COL.VEICULO] || '').trim();
+    const obs = (cols[COL.OBS] || '').trim();
+    const condo = (cols[COL.CONDO] || '').trim();
+    const voltagem = (cols[COL.VOLTAGEM] || '').trim();
+
+    if(!cliente && !veiculo) {
+      errors.push(`Linha ${idx+1}: sem cliente e sem veículo, ignorada`);
+      return;
+    }
+
+    // Extract time from "13/02 às 08:15"
+    const timeMatch = horarioRaw.match(/(\d{2}\/\d{2})\s*às\s*(\d{2}:\d{2})/);
+    let date = '', time = '';
+    if(timeMatch) {
+      date = timeMatch[1];
+      time = timeMatch[2];
+    } else {
+      // Try just time
+      const justTime = horarioRaw.match(/(\d{2}:\d{2})/);
+      if(justTime) time = justTime[1];
+    }
+
+    // Build combined observations
+    let allObs = [];
+    if(obs) allObs.push(obs);
+    if(voltagem && /\d+v/i.test(voltagem)) allObs.push(voltagem);
+
+    parsedServices.push({
+      prestador: prestador,
+      date: date,
+      time: time,
+      cliente: cliente,
+      endereco: endereco,
+      lavagem: lavagem || 'Lavagem Completa',
+      veiculo: veiculo,
+      obs: allObs.join('. '),
+      condo: condo,
+    });
+  });
+
+  // Show result
+  if(parsedServices.length === 0) {
+    resultDiv.innerHTML = `<div class="parse-badge error">❌ Nenhum serviço válido encontrado.</div>` +
+      (errors.length ? `<div style="color:var(--text2);font-size:12px;margin-top:8px">${errors.join('<br>')}</div>` : '');
+    resultDiv.classList.add('show');
+    document.getElementById('step2').style.display='none';
+    return;
+  }
+
+  // Group by washer for summary
+  const byWasher = {};
+  parsedServices.forEach(s => {
+    if(!byWasher[s.prestador]) byWasher[s.prestador] = [];
+    byWasher[s.prestador].push(s);
+  });
+  const washerNames = Object.keys(byWasher);
+
+  let html = `<div class="parse-badge success">✅ ${parsedServices.length} serviço(s) encontrado(s) — ${washerNames.length} lavador(es)</div>`;
+
+  // Preview table
+  html += `<div style="overflow-x:auto;margin-top:12px"><table class="preview-table"><thead><tr>
+    <th>Lavador</th><th>Horário</th><th>Cliente</th><th>Endereço</th><th>Condomínio</th><th>Veículo</th><th>Lavagem</th><th>Obs</th>
+  </tr></thead><tbody>`;
+
+  parsedServices.forEach(s => {
+    html += `<tr>
+      <td>${esc(s.prestador)}</td>
+      <td>${esc(s.time)}</td>
+      <td>${esc(s.cliente)}</td>
+      <td>${esc(truncate(s.endereco,40))}</td>
+      <td>${esc(s.condo)}</td>
+      <td>${esc(s.veiculo)}</td>
+      <td>${esc(s.lavagem)}</td>
+      <td class="obs-cell">${esc(truncate(s.obs,50))}</td>
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>`;
+
+  if(errors.length) {
+    html += `<div style="margin-top:8px"><div class="parse-badge warning">⚠️ ${errors.length} linha(s) ignorada(s)</div>
+    <div style="color:var(--text2);font-size:11px;margin-top:4px">${errors.join('<br>')}</div></div>`;
+  }
+
+  resultDiv.innerHTML = html;
+  resultDiv.classList.add('show');
+  document.getElementById('step2').style.display='block';
+  document.getElementById('step3').style.display='none';
+}
+
+// ===== GENERATE =====
+function generateAll() {
+  if(parsedServices.length === 0) return;
+
+  // Group by washer
+  const byWasher = {};
+  parsedServices.forEach(s => {
+    const key = s.prestador || 'Sem nome';
+    if(!byWasher[key]) byWasher[key] = [];
+    byWasher[key].push(s);
+  });
+
+  // Options
+  const aguardando = document.getElementById('chk-aguardando').checked;
+  const deslocamento = document.getElementById('chk-deslocamento').checked;
+  const deslVal = document.getElementById('deslocamento-amount').value.trim();
+  const customChk = document.getElementById('chk-custom').checked;
+  const customTxt = document.getElementById('custom-msg').value.trim();
+
+  const container = document.getElementById('output-container');
+  container.innerHTML = '';
+
+  Object.keys(byWasher).forEach(washerName => {
+    const services = byWasher[washerName];
+    // Sort by time
+    services.sort((a,b) => a.time.localeCompare(b.time));
+
+    // Get display name (first name or full)
+    const displayName = getFirstName(washerName);
+    // Get date from first service
+    const dateStr = services[0].date || 'XX/XX';
+
+    // Build message
+    let msg = `Olá, ${displayName}! Tudo certo? Segue sua agenda para ${dateStr} ✅`;
+
+    if(aguardando) {
+      msg += `\nEstamos aguardando novos agendamentos para completar a sua agenda.`;
+    }
+    if(deslocamento) {
+      msg += deslVal
+        ? `\nEssa agenda terá ajuda de deslocamento de ${deslVal}.`
+        : `\nEssa agenda terá ajuda de deslocamento.`;
+    }
+    if(customChk && customTxt) {
+      msg += `\n${customTxt}`;
+    }
+
+    services.forEach(s => {
+      const clock = CLOCKS[s.time] || '🕐';
+      const vEmoji = isMotorcycle(s.veiculo) ? '🏍️' : '🚘';
+
+      msg += `\n\n${clock} ${s.time} – ${s.cliente}`;
+
+      // Address
+      if(s.endereco || s.condo) {
+        let addr = '📍 ';
+        if(s.endereco) {
+          addr += formatAddress(s.endereco);
+        }
+        if(s.condo) {
+          if(s.endereco) addr += ` — Condomínio: ${formatCondo(s.condo)}`;
+          else addr += `Condomínio: ${formatCondo(s.condo)}`;
+        }
+        msg += `\n${addr}`;
+      }
+
+      // Vehicle
+      msg += `\n${vEmoji} ${capitalizeVehicle(s.veiculo)} (${capitalizeLavagem(s.lavagem)})`;
+
+      // Observations
+      if(s.obs) {
+        msg += `\n⚠️ ${s.obs}`;
+      }
+    });
+
+    // Footer
+    msg += `\n\nConfira o Guia para Lavadores: https://www.lavago.com.br/guia-prestadores`;
+    msg += `\n\nPor favor, confirme o recebimento respondendo com "ok".`;
+
+    // Render
+    const block = document.createElement('div');
+    block.className = 'washer-output';
+    block.innerHTML = `
+      <div class="washer-output-header">
+        <span class="washer-output-name">📋 ${esc(displayName)}</span>
+        <span class="washer-output-count">${services.length} serviço(s) — ${dateStr}</span>
+      </div>
+      <div class="output-box" id="out-${slugify(washerName)}">${esc(msg)}</div>
+      <div class="output-actions">
+        <button class="btn-copy" onclick="copyMsg(this,'out-${slugify(washerName)}')">📋 Copiar Mensagem</button>
+      </div>
+    `;
+    container.appendChild(block);
+  });
+
+  document.getElementById('step3').style.display='block';
+  document.getElementById('step3').scrollIntoView({behavior:'smooth'});
+}
+
+// ===== COPY =====
+function copyMsg(btn, outId) {
+  const text = document.getElementById(outId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Copiado!';
+    btn.classList.add('copied');
+    showToast();
+    setTimeout(() => { btn.textContent='📋 Copiar Mensagem'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast();
+  });
+}
+
+function showToast() {
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== RESET =====
+function resetAll() {
+  document.getElementById('paste-area').value = '';
+  document.getElementById('parse-result').classList.remove('show');
+  document.getElementById('parse-result').innerHTML = '';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step3').style.display = 'none';
+  document.getElementById('chk-aguardando').checked = false;
+  document.getElementById('chk-deslocamento').checked = false;
+  document.getElementById('chk-custom').checked = false;
+  document.getElementById('desl-val').classList.remove('show');
+  document.getElementById('custom-val').classList.remove('show');
+  document.getElementById('deslocamento-amount').value = '';
+  document.getElementById('custom-msg').value = '';
+  parsedServices = [];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ===== HELPERS =====
+function esc(s) {
+  if(!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function truncate(s, n) {
+  if(!s) return '';
+  return s.length > n ? s.slice(0,n) + '…' : s;
+}
+
+function getFirstName(fullName) {
+  if(!fullName) return '';
+  // Handle "Jonathan william de Moura" -> "William" (known case)
+  // Handle "Gabriel Henrique Zambon" -> "Gabriel"
+  // Handle "Carradini franco ferreira" -> "Carradini"
+  const parts = fullName.trim().split(/\s+/);
+  // Special: if first part looks like "Jonathan" and it's William, use first
+  return parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
+}
+
+function slugify(s) {
+  return s.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase();
+}
+
+function isMotorcycle(v) {
+  if(!v) return false;
+  const l = v.toLowerCase();
+  return /\b(moto|pcx|cg\s|honda cg|biz|pop|factor|fazer|cb\s|xre|bros)\b/.test(l);
+}
+
+function capitalizeVehicle(v) {
+  if(!v) return '';
+  // Capitalize first letter of each word, but keep brand abbreviations
+  return v.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function capitalizeLavagem(l) {
+  if(!l) return 'Lavagem Completa';
+  return l.charAt(0).toUpperCase() + l.slice(1);
+}
+
+function formatAddress(addr) {
+  if(!addr) return '';
+  // Clean up common issues
+  return addr
+    .replace(/\s+/g, ' ')
+    .replace(/\s*,\s*/g, ', ')
+    .trim();
+}
+
+function formatCondo(c) {
+  if(!c) return '';
+  // Capitalize first letter of each word
+  return c.trim().replace(/\b\w/g, x => x.toUpperCase());
+}
+</script>
+</body>
+</html>
