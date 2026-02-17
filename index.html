@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LavaGo — Agenda dos Lavadores</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#242836; --border:#2e3344;
+  --text:#e8eaf0; --text2:#8b90a0; --accent:#3b82f6; --accent-hover:#2563eb;
+  --green:#22c55e; --green-bg:#22c55e15; --orange:#f59e0b; --orange-bg:#f59e0b12;
+  --red:#ef4444; --red-bg:#ef444415; --purple:#a855f7; --purple-bg:#a855f715;
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ===== PIN ===== */
+#pin-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.pin-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;text-align:center;max-width:380px;width:100%}
+.logo{font-size:28px;font-weight:700;margin-bottom:8px}.logo span{color:var(--accent)}
+.pin-subtitle{color:var(--text2);font-size:14px;margin-bottom:32px}
+.pin-input{display:flex;gap:10px;justify-content:center;margin-bottom:24px}
+.pin-input input{width:52px;height:60px;background:var(--surface2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:24px;text-align:center;outline:none;transition:border-color .2s}
+.pin-input input:focus{border-color:var(--accent)}
+.pin-error{color:var(--red);font-size:13px;min-height:20px;margin-bottom:8px}
+
+/* ===== BUTTONS ===== */
+.btn{border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--accent);color:white;padding:12px 32px;font-size:15px;width:100%}.btn-primary:hover{background:var(--accent-hover)}
+.btn-green{background:var(--green);color:#0a1628;padding:14px 32px;font-size:16px;font-weight:700;width:100%}.btn-green:hover{background:#16a34a}
+.btn-purple{background:var(--purple);color:white;padding:14px 32px;font-size:16px;font-weight:700;width:100%}.btn-purple:hover{background:#9333ea}
+.btn-secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 24px;font-size:14px}.btn-secondary:hover{border-color:var(--text2)}
+.btn-copy{background:var(--accent);color:white;padding:10px 20px;font-size:13px;flex:1}.btn-copy:hover{background:var(--accent-hover)}.btn-copy.copied{background:var(--green);color:#0a1628}
+.btn-sm{padding:8px 16px;font-size:13px}
+.btn-logout{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}.btn-logout:hover{color:var(--text);border-color:var(--text2)}
+.btn-back{background:transparent;border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}.btn-back:hover{color:var(--text);border-color:var(--text2)}
+.btn-danger{background:var(--red-bg);border:1px solid #ef444430;color:var(--red);padding:8px 16px;font-size:13px;border-radius:8px;font-family:'DM Sans',sans-serif;cursor:pointer}.btn-danger:hover{background:var(--red);color:white}
+
+/* ===== LAYOUT ===== */
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.app-title{font-size:20px;font-weight:700}.app-title span{color:var(--accent)}
+.header-actions{display:flex;align-items:center;gap:10px}
+.app-body{max-width:960px;margin:0 auto;padding:24px}
+
+/* ===== SECTIONS ===== */
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
+.section-title{font-size:16px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.section-title .num{background:var(--accent);color:white;min-width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.section-title .num.purple{background:var(--purple)}
+.section-desc{color:var(--text2);font-size:13px;margin-bottom:16px;line-height:1.5}
+
+/* ===== FORMS ===== */
+label{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.paste-area{min-height:160px;border:2px dashed var(--border);border-radius:12px;background:var(--bg);padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);line-height:1.6;transition:all .2s;resize:vertical;width:100%}
+.paste-area:focus{border-color:var(--accent)}
+.paste-area::placeholder{color:var(--text2);opacity:.5}
+
+/* ===== CHECKBOXES ===== */
+.checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.checkbox-row input[type="checkbox"]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.checkbox-row label{font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer}
+.extra-input{margin-top:8px;margin-bottom:8px;display:none}.extra-input.show{display:block}
+
+/* ===== BADGE ===== */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:12px}
+.badge.success{background:var(--green-bg);color:var(--green);border:1px solid #22c55e25}
+.badge.error{background:var(--red-bg);color:var(--red);border:1px solid #ef444425}
+.badge.warning{background:var(--orange-bg);color:var(--orange);border:1px solid #f59e0b25}
+.badge.info{background:var(--purple-bg);color:var(--purple);border:1px solid #a855f725}
+
+/* ===== TABLE ===== */
+.preview-table{width:100%;border-collapse:collapse;font-size:13px}
+.preview-table th{text-align:left;padding:8px 10px;background:var(--surface2);color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.preview-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table .obs-cell{font-size:12px;color:var(--orange)}
+
+/* ===== OUTPUT ===== */
+.output-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;max-height:500px;overflow-y:auto}
+.output-actions{display:flex;gap:10px;margin-top:12px}
+.washer-output{margin-bottom:20px}
+.washer-output-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:10px 14px;background:var(--surface2);border-radius:8px}
+.washer-output-name{font-weight:600;font-size:15px}
+.washer-output-count{color:var(--text2);font-size:13px}
+
+/* ===== HUB ===== */
+.hub-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:20px}
+.hub-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;cursor:pointer;transition:all .25s;text-align:center;position:relative;overflow:hidden}
+.hub-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.hub-card.purple:hover{border-color:var(--purple)}
+.hub-icon{font-size:48px;margin-bottom:16px;display:block}
+.hub-card-title{font-size:18px;font-weight:700;margin-bottom:8px}
+.hub-card-desc{color:var(--text2);font-size:13px;line-height:1.5}
+.hub-card .tag{position:absolute;top:12px;right:12px;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.tag-ready{background:var(--green-bg);color:var(--green);border:1px solid #22c55e30}
+.tag-ai{background:var(--purple-bg);color:var(--purple);border:1px solid #a855f730}
+
+/* ===== LAVADOR LIST ===== */
+.lavador-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.lavador-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:all .2s}
+.lavador-card.active{border-color:var(--green);background:var(--green-bg)}
+.lavador-card.inactive{opacity:.5}
+.lavador-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lavador-left{display:flex;align-items:center;gap:10px;flex:1}
+.lavador-toggle{width:40px;height:22px;border-radius:11px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.lavador-toggle.on{background:var(--green)}
+.lavador-toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:left .2s}
+.lavador-toggle.on::after{left:21px}
+.lavador-name{font-size:14px;font-weight:600}
+.lavador-status{font-size:11px;color:var(--text2);margin-left:auto}
+.lavador-remove{background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;transition:all .15s}
+.lavador-remove:hover{color:var(--red);background:var(--red-bg)}
+.lavador-hours{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.hour-chip{padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s;user-select:none}
+.hour-chip.on{background:var(--green-bg);border-color:#22c55e40;color:var(--green)}
+.hour-chip.off{background:var(--red-bg);border-color:#ef444430;color:var(--red);text-decoration:line-through}
+.add-lavador-row{display:flex;gap:8px;margin-top:4px}
+.add-lavador-row input{flex:1;max-width:220px}
+.btn-add-lav{background:var(--surface2);border:2px dashed var(--border);color:var(--text2);border-radius:10px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;width:100%;transition:all .2s}
+.btn-add-lav:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ===== PROMPT MGMT ===== */
+.prompt-status{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--bg);border-radius:10px;margin-bottom:12px;font-size:13px}
+.prompt-status .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.prompt-status .dot.active{background:var(--green)}
+.prompt-status .dot.none{background:var(--red)}
+.file-upload-area{border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.file-upload-area:hover{border-color:var(--accent)}
+.file-upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file-upload-area .upload-text{color:var(--text2);font-size:13px}
+.file-upload-area .upload-icon{font-size:32px;margin-bottom:8px;display:block}
+
+/* ===== AI LOADING ===== */
+.ai-loading{text-align:center;padding:40px 20px}
+.ai-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-loading-text{color:var(--text2);font-size:14px}
+.ai-loading-sub{color:var(--text2);font-size:12px;margin-top:4px;opacity:.7}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#0a1628;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;transform:translateY(80px);opacity:0;transition:all .3s ease;z-index:1000}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ===== SCREEN MGMT ===== */
+.screen{display:none}.screen.active{display:block}
+
+/* ===== PAYMENT ===== */
+.pay-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.pay-row.triple{grid-template-columns:1fr 1fr 1fr}
+.pay-group{display:flex;flex-direction:column;gap:4px}
+.pay-group.full{grid-column:1/-1}
+.pay-group input,.pay-group select{width:100%}
+.discount-entry{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;position:relative}
+.discount-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.discount-title{font-size:13px;font-weight:600;color:var(--orange)}
+.btn-remove-discount{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}.btn-remove-discount:hover{color:var(--red)}
+.btn-add-discount{background:var(--surface2);border:2px dashed var(--border);color:var(--text2);border-radius:10px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;width:100%;transition:all .2s;margin-top:4px}.btn-add-discount:hover{border-color:var(--orange);color:var(--orange)}
+.pay-summary{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px}
+.pay-summary-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.pay-summary-row.total{border-top:2px solid var(--border);margin-top:8px;padding-top:12px;font-weight:700;font-size:16px}
+.pay-summary-row .label{color:var(--text2)}
+.pay-summary-row .value{font-weight:600}
+.pay-summary-row .value.green{color:var(--green)}
+.pay-summary-row .value.red{color:var(--red)}
+
+@media(max-width:640px){
+  .hub-grid{grid-template-columns:1fr}
+  .app-body{padding:16px}
+  .section-card{padding:16px}
+  .pin-card{padding:32px 24px}
+  .output-actions{flex-direction:column}
+  .lavador-grid{grid-template-columns:1fr 1fr}
+  .pay-row{grid-template-columns:1fr}
+  .pay-row.triple{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== PIN ===== -->
+<div id="pin-screen">
+  <div class="pin-card">
+    <div class="logo">Lava<span>Go</span></div>
+    <div class="pin-subtitle">Gerador de Agenda</div>
+    <div class="pin-input">
+      <input type="tel" maxlength="1" id="p1" autofocus>
+      <input type="tel" maxlength="1" id="p2">
+      <input type="tel" maxlength="1" id="p3">
+      <input type="tel" maxlength="1" id="p4">
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn btn-primary" onclick="checkPin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-screen" style="display:none">
+  <div class="app-header">
+    <div class="app-title">Lava<span>Go</span> — Agenda</div>
+    <div class="header-actions">
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="app-body">
+
+    <!-- HUB -->
+    <div class="screen active" id="screen-hub">
+      <div class="section-card" style="border:none;background:transparent;padding:0;text-align:center">
+        <h2 style="font-size:22px;font-weight:700;margin-bottom:4px">O que deseja fazer?</h2>
+        <p style="color:var(--text2);font-size:14px">Escolha uma das opções abaixo</p>
+      </div>
+      <div class="hub-grid">
+        <div class="hub-card" onclick="goTo('send')">
+          <span class="tag tag-ready">Pronto</span>
+          <span class="hub-icon">📋</span>
+          <div class="hub-card-title">Enviar Agenda</div>
+          <div class="hub-card-desc">Cole os dados do Sheets já divididos por lavador e gere as mensagens formatadas para WhatsApp.</div>
+        </div>
+        <div class="hub-card purple" onclick="goTo('build')">
+          <span class="tag tag-ai">✨ IA</span>
+          <span class="hub-icon">🧠</span>
+          <div class="hub-card-title">Montar Agenda</div>
+          <div class="hub-card-desc">Cole todos os agendamentos do dia e a IA divide entre os lavadores disponíveis, otimizando rotas.</div>
+        </div>
+        <div class="hub-card" onclick="goTo('pay')" style="border-color:var(--border)">
+          <span class="tag tag-ready">Pronto</span>
+          <span class="hub-icon">💰</span>
+          <div class="hub-card-title">Pagamento</div>
+          <div class="hub-card-desc">Gere o resumo semanal de pagamento dos lavadores formatado para WhatsApp.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLOW 1: ENVIAR AGENDA ===== -->
+    <div class="screen" id="screen-send">
+      <button class="btn-back" onclick="goTo('hub')">← Voltar</button>
+      <h2 style="font-size:20px;font-weight:700;margin:16px 0 4px">📋 Enviar Agenda</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Cole dados já divididos por lavador → gere mensagens formatadas</p>
+
+      <div class="section-card">
+        <div class="section-title"><span class="num">1</span> Colar Dados do Google Sheets</div>
+        <div class="section-desc">Selecione as linhas dos serviços na planilha (sem cabeçalho), copie e cole abaixo.</div>
+        <textarea class="paste-area" id="send-paste" placeholder="Cole aqui os dados copiados do Google Sheets..." oninput="sendParse()"></textarea>
+        <div id="send-parse-result" style="margin-top:16px"></div>
+      </div>
+
+      <div class="section-card" id="send-step2" style="display:none">
+        <div class="section-title"><span class="num">2</span> Opções</div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="send-chk-aguardando">
+          <label for="send-chk-aguardando">Estamos aguardando novos agendamentos</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="send-chk-desl" onchange="document.getElementById('send-desl-val').classList.toggle('show',this.checked)">
+          <label for="send-chk-desl">Ajuda de deslocamento</label>
+        </div>
+        <div class="extra-input" id="send-desl-val">
+          <input type="text" id="send-desl-amount" placeholder="Ex: R$ 15,00" style="max-width:200px">
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="send-chk-custom" onchange="document.getElementById('send-custom-val').classList.toggle('show',this.checked)">
+          <label for="send-chk-custom">Mensagem extra</label>
+        </div>
+        <div class="extra-input" id="send-custom-val">
+          <input type="text" id="send-custom-msg" placeholder="Ex: Agenda preliminar">
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-green" onclick="sendGenerate()">✅ Gerar Mensagens</button>
+        </div>
+      </div>
+
+      <div class="section-card" id="send-step3" style="display:none">
+        <div class="section-title"><span class="num">3</span> Mensagens Prontas</div>
+        <div id="send-output"></div>
+        <div style="margin-top:16px">
+          <button class="btn btn-secondary" onclick="sendReset()">↺ Nova Agenda</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLOW 2: MONTAR AGENDA (AI) ===== -->
+    <div class="screen" id="screen-build">
+      <button class="btn-back" onclick="goTo('hub')">← Voltar</button>
+      <h2 style="font-size:20px;font-weight:700;margin:16px 0 4px">🧠 Montar Agenda com IA</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Cole todos os agendamentos → a IA divide pelos lavadores</p>
+
+      <!-- PROMPT MGMT -->
+      <div class="section-card">
+        <div class="section-title"><span class="num purple">⚙</span> Prompt de Regras</div>
+        <div class="section-desc">O prompt contém as regras de divisão (lavadores, clusters, restrições). Carregue um arquivo .md para atualizar.</div>
+        <div class="prompt-status" id="prompt-status">
+          <span class="dot none" id="prompt-dot"></span>
+          <span id="prompt-label">Nenhum prompt carregado</span>
+        </div>
+        <div class="file-upload-area" id="file-upload-area">
+          <input type="file" accept=".md,.txt" onchange="loadPromptFile(event)">
+          <span class="upload-icon">📄</span>
+          <div class="upload-text">Arraste ou clique para carregar arquivo .md</div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center" id="prompt-actions" hidden>
+          <button class="btn btn-secondary btn-sm" onclick="previewPrompt()">👁 Ver Prompt</button>
+          <button class="btn-danger btn-sm" onclick="clearPrompt()">✕ Remover</button>
+        </div>
+      </div>
+
+      <!-- PASTE DATA -->
+      <div class="section-card">
+        <div class="section-title"><span class="num purple">1</span> Colar Agendamentos do Dia</div>
+        <div class="section-desc">Cole TODOS os agendamentos do dia (todos os lavadores/sem divisão). A IA vai dividir.</div>
+        <textarea class="paste-area" id="build-paste" placeholder="Cole aqui todos os agendamentos do dia do Google Sheets..." oninput="buildParse()"></textarea>
+        <div id="build-parse-result" style="margin-top:16px"></div>
+      </div>
+
+      <!-- LAVADORES DISPONÍVEIS -->
+      <div class="section-card" id="build-step2" style="display:none">
+        <div class="section-title"><span class="num purple">2</span> Lavadores Disponíveis</div>
+        <div class="section-desc">Ative/desative lavadores e ajuste os horários disponíveis de cada um. Clique nos horários para bloquear/liberar.</div>
+        <div class="lavador-list" id="lavador-list"></div>
+        <div class="add-lavador-row" id="add-lavador-row">
+          <input type="text" id="new-lavador-name" placeholder="Nome do novo lavador" onkeydown="if(event.key==='Enter')addLavador()">
+          <button class="btn btn-secondary btn-sm" onclick="addLavador()">+ Adicionar</button>
+        </div>
+        <div style="margin-top:12px">
+          <div class="checkbox-row">
+            <input type="checkbox" id="build-chk-aguardando">
+            <label for="build-chk-aguardando">Agenda preliminar (aguardando novos agendamentos)</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- GENERATE -->
+      <div class="section-card" id="build-step3" style="display:none">
+        <div class="section-title"><span class="num purple">3</span> Montar com IA</div>
+        <button class="btn btn-purple" onclick="buildGenerate()" id="build-btn">🧠 Montar Agenda</button>
+      </div>
+
+      <!-- AI LOADING -->
+      <div class="section-card" id="build-loading" style="display:none">
+        <div class="ai-loading">
+          <div class="ai-spinner"></div>
+          <div class="ai-loading-text">A IA está montando a agenda...</div>
+          <div class="ai-loading-sub">Analisando rotas, clusters e balanceamento</div>
+        </div>
+      </div>
+
+      <!-- AI RESULT -->
+      <div class="section-card" id="build-result" style="display:none">
+        <div class="section-title"><span class="num purple">4</span> Resultado da IA</div>
+        <div id="build-ai-reasoning" style="margin-bottom:16px"></div>
+        <div id="build-output"></div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="buildReset()">↺ Recomeçar</button>
+          <button class="btn btn-secondary" onclick="buildGenerate()" title="Rodar novamente">🔄 Gerar novamente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLOW 3: PAGAMENTO ===== -->
+    <div class="screen" id="screen-pay">
+      <button class="btn-back" onclick="goTo('hub')">← Voltar</button>
+      <h2 style="font-size:20px;font-weight:700;margin:16px 0 4px">💰 Pagamento Semanal</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Preencha os dados e gere a mensagem de pagamento para o lavador</p>
+
+      <!-- LAVADOR + PERÍODO -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">1</span> Lavador e Período</div>
+        <div class="pay-row">
+          <div class="pay-group">
+            <label>Nome do Lavador</label>
+            <select id="pay-washer" onchange="payLoadDefaults()">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+          <div class="pay-group">
+            <label>Ou digite um nome</label>
+            <input type="text" id="pay-washer-custom" placeholder="Nome personalizado" oninput="document.getElementById('pay-washer').value=''">
+          </div>
+        </div>
+        <div class="pay-row triple">
+          <div class="pay-group">
+            <label>Início do Período</label>
+            <input type="date" id="pay-period-start">
+          </div>
+          <div class="pay-group">
+            <label>Fim do Período</label>
+            <input type="date" id="pay-period-end">
+          </div>
+          <div class="pay-group">
+            <label>Data do Pagamento</label>
+            <input type="text" id="pay-date-text" placeholder="Ex: amanhã, sexta-feira">
+          </div>
+        </div>
+      </div>
+
+      <!-- LAVAGENS -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">2</span> Lavagens Realizadas</div>
+        <div class="pay-row triple">
+          <div class="pay-group">
+            <label>Veículos Passeio (qtd)</label>
+            <input type="number" id="pay-cars" value="0" min="0" oninput="payCalc()">
+          </div>
+          <div class="pay-group">
+            <label>Valor por Passeio (R$)</label>
+            <input type="number" id="pay-car-price" value="50" step="0.01" oninput="payCalc()">
+          </div>
+          <div class="pay-group">
+            <label>Subtotal Passeio</label>
+            <input type="text" id="pay-cars-sub" readonly style="color:var(--green);font-weight:600">
+          </div>
+        </div>
+        <div class="pay-row triple">
+          <div class="pay-group">
+            <label>Pickup / Grande (qtd)</label>
+            <input type="number" id="pay-pickups" value="0" min="0" oninput="payCalc()">
+          </div>
+          <div class="pay-group">
+            <label>Valor por Pickup (R$)</label>
+            <input type="number" id="pay-pickup-price" value="60" step="0.01" oninput="payCalc()">
+          </div>
+          <div class="pay-group">
+            <label>Subtotal Pickup</label>
+            <input type="text" id="pay-pickups-sub" readonly style="color:var(--green);font-weight:600">
+          </div>
+        </div>
+      </div>
+
+      <!-- BÔNUS E EXTRAS -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">3</span> Bônus e Extras</div>
+        <div class="pay-row">
+          <div class="pay-group">
+            <label>Ajuda de Deslocamento (R$)</label>
+            <input type="number" id="pay-desloc" value="0" step="0.01" oninput="payCalc()">
+          </div>
+          <div class="pay-group">
+            <label>Outros Bônus (R$)</label>
+            <input type="number" id="pay-bonus" value="0" step="0.01" oninput="payCalc()">
+          </div>
+        </div>
+        <div class="pay-group full" style="margin-top:4px">
+          <label>Descrição do bônus (opcional)</label>
+          <input type="text" id="pay-bonus-desc" placeholder="Ex: Bônus por pontualidade">
+        </div>
+      </div>
+
+      <!-- MÍNIMO GARANTIDO -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">4</span> Mínimo Semanal Garantido</div>
+        <div class="pay-row">
+          <div class="pay-group">
+            <label style="text-transform:none;letter-spacing:0;font-size:14px">
+              <input type="checkbox" id="pay-chk-minimo" onchange="payToggleMinimo()" style="width:18px;height:18px;vertical-align:middle;margin-right:6px">
+              Tem mínimo semanal garantido
+            </label>
+          </div>
+          <div class="pay-group" id="pay-minimo-group" style="display:none">
+            <label>Valor Mínimo (R$)</label>
+            <input type="number" id="pay-minimo" value="550" step="0.01" oninput="payCalc()">
+          </div>
+        </div>
+      </div>
+
+      <!-- COMODATO -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">5</span> Comodato de Equipamento</div>
+        <div class="pay-row">
+          <div class="pay-group">
+            <label style="text-transform:none;letter-spacing:0;font-size:14px">
+              <input type="checkbox" id="pay-chk-comodato" onchange="payToggleComodato()" style="width:18px;height:18px;vertical-align:middle;margin-right:6px">
+              Tem comodato ativo
+            </label>
+          </div>
+        </div>
+        <div id="pay-comodato-fields" style="display:none">
+          <div class="pay-row triple">
+            <div class="pay-group">
+              <label>Abatimento mínimo semanal (R$)</label>
+              <input type="number" id="pay-abat-minimo" value="88" step="0.01" oninput="payCalc()">
+            </div>
+            <div class="pay-group">
+              <label>Valor por lavagem (R$)</label>
+              <input type="number" id="pay-abat-por-lav" value="8" step="0.01" oninput="payCalc()">
+            </div>
+            <div class="pay-group">
+              <label>Abatimento calculado</label>
+              <input type="text" id="pay-abat-calc" readonly style="color:var(--orange);font-weight:600">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESCONTOS EXTRAS -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">6</span> Descontos Extras</div>
+        <div id="pay-discounts-list"></div>
+        <button class="btn-add-discount" onclick="payAddDiscount()">+ Adicionar Desconto</button>
+      </div>
+
+      <!-- RESUMO + GERAR -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">7</span> Resumo e Mensagem</div>
+        <div class="pay-summary" id="pay-summary"></div>
+        <div style="margin-top:16px">
+          <button class="btn btn-green" onclick="payGenerate()">✅ Gerar Mensagem de Pagamento</button>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div class="section-card" id="pay-output-section" style="display:none">
+        <div class="section-title"><span class="num">8</span> Mensagem Pronta</div>
+        <div class="output-box" id="pay-output-box"></div>
+        <div class="output-actions">
+          <button class="btn btn-copy" onclick="copyMsg(this,'pay-output-box')">📋 Copiar</button>
+          <button class="btn btn-secondary" onclick="payReset()">↺ Novo Pagamento</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROMPT PREVIEW MODAL -->
+    <div id="prompt-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);padding:20px;overflow-y:auto" onclick="if(event.target===this)this.style.display='none'">
+      <div style="max-width:700px;margin:40px auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-height:80vh;overflow-y:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="font-size:16px;font-weight:700">Prompt Carregado</h3>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('prompt-modal').style.display='none'">✕ Fechar</button>
+        </div>
+        <pre id="prompt-preview-text" style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;color:var(--text2);max-height:60vh;overflow-y:auto"></pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Copiado!</div>
+
+<script>
+// ==================== CONFIG ====================
+const CORRECT_PIN = '2025';
+
+// ⚠️ TROCAR PELO SEU PROJECT REF DO SUPABASE
+const SUPABASE_FN_URL = 'https://whfjpiiyrtwadeufazhz.supabase.co/functions/v1/agenda-ai';
+
+const COL = {
+  CONCAT:0, PRESTADOR:1, RG_PREST:2, HORARIO:3, NOME_CLI:4, TEL_CLI:5,
+  ENDERECO:6, LAVAGEM:7, VEICULO:8, STATUS:9, ID_USER:10, VALOR:11,
+  RESERVADO:12, TIPO_VEIC:13, TEL_HOR:14, PREST2:15, RG_PREST2:16,
+  OBS:17, CONDO:18, VOLTAGEM:19, CALIBR:20, CPF:21, VALOR_DEV:22,
+  CUSTO_LAV:23, IMPOSTO:24, NF_STATUS:25
+};
+
+const CLOCKS = {
+  '07:00':'🕖','07:15':'🕖','07:30':'🕖','07:45':'🕖',
+  '08:00':'🕗','08:15':'🕗','08:30':'🕣','08:45':'🕗',
+  '09:00':'🕘','09:15':'🕘','09:30':'🕤','09:45':'🕘',
+  '10:00':'🕙','10:15':'🕙','10:30':'🕥','10:45':'🕙',
+  '11:00':'🕚','11:15':'🕦','11:30':'🕦','11:45':'🕦',
+  '12:00':'🕛','12:15':'🕧','12:30':'🕧','12:45':'🕧',
+  '13:00':'🕐','13:15':'🕐','13:30':'🕜','13:45':'🕐',
+  '14:00':'🕑','14:15':'🕑','14:30':'🕝','14:45':'🕑',
+  '15:00':'🕒','15:15':'🕒','15:30':'🕞','15:45':'🕒',
+  '16:00':'🕓','16:15':'🕟','16:30':'🕟','16:45':'🕓',
+  '17:00':'🕔','17:15':'🕔','17:30':'🕠','17:45':'🕔',
+  '18:00':'🕕','18:15':'🕕','18:30':'🕡','18:45':'🕕',
+};
+
+const DEFAULT_LAVADORES = ['Gabriel','Bruno','Jonathan William','Diego Jean','Ricardo','João Vitor','Carradini'];
+
+let sendParsedServices = [];
+let buildParsedServices = [];
+let currentPrompt = null;
+let currentPromptName = null;
+
+// ==================== PIN ====================
+document.querySelectorAll('.pin-input input').forEach((inp,i,arr) => {
+  inp.addEventListener('input', () => { if(inp.value.length===1 && i<arr.length-1) arr[i+1].focus(); });
+  inp.addEventListener('keydown', (e) => {
+    if(e.key==='Backspace' && inp.value==='' && i>0) arr[i-1].focus();
+    if(e.key==='Enter') checkPin();
+  });
+});
+
+function checkPin() {
+  const pin = ['p1','p2','p3','p4'].map(id=>document.getElementById(id).value).join('');
+  if(pin===CORRECT_PIN) {
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    loadSavedPrompt();
+  } else {
+    document.getElementById('pin-error').textContent='PIN incorreto.';
+    document.querySelectorAll('.pin-input input').forEach(i=>{i.value='';});
+    document.getElementById('p1').focus();
+  }
+}
+
+function logout() {
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
+  document.querySelectorAll('.pin-input input').forEach(i=>{i.value='';});
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('p1').focus();
+}
+
+// ==================== NAVIGATION ====================
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${screen}`).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(screen === 'build') initLavadorState();
+  if(screen === 'pay') payInit();
+}
+
+// ==================== SHARED PARSING ====================
+function parseSheetData(raw) {
+  // Google Sheets pode inserir \n dentro de campos.
+  // Precisamos recompor: uma "linha válida" começa com o padrão da coluna Concatenar
+  // (que contém "DD/MM às HH:MM" no início ou logo após o primeiro tab).
+  // Linhas que não matcham esse padrão são continuação da anterior.
+  const rawLines = raw.split('\n');
+  const reconstituted = [];
+
+  rawLines.forEach(line => {
+    if(!line.trim()) return;
+    // Uma linha válida do Sheets tem muitos tabs (>=8) e contém "às" no padrão de horário
+    const tabCount = (line.match(/\t/g) || []).length;
+    const hasSchedulePattern = /\d{2}\/\d{2}\s*às\s*\d{2}:\d{2}/.test(line);
+
+    if(tabCount >= 8 && hasSchedulePattern) {
+      // Nova linha válida
+      reconstituted.push(line);
+    } else if(reconstituted.length > 0) {
+      // Continuação da linha anterior — concatenar (separado por espaço)
+      reconstituted[reconstituted.length - 1] += ' ' + line.trim();
+    }
+    // else: lixo antes da primeira linha válida, ignorar
+  });
+
+  const services = [];
+  const errors = [];
+
+  reconstituted.forEach((line, idx) => {
+    const cols = line.split('\t');
+    if(cols.length < 9) { errors.push(`Linha ${idx+1}: ${cols.length} colunas`); return; }
+
+    const horarioRaw = (cols[COL.HORARIO] || '').trim();
+    const prestador = (cols[COL.PRESTADOR] || '').trim();
+    const cliente = (cols[COL.NOME_CLI] || '').trim();
+    const endereco = (cols[COL.ENDERECO] || '').trim();
+    const lavagem = (cols[COL.LAVAGEM] || '').trim();
+    const veiculo = (cols[COL.VEICULO] || '').trim();
+    const obs = (cols[COL.OBS] || '').trim();
+    const condo = (cols[COL.CONDO] || '').trim();
+    const voltagem = (cols[COL.VOLTAGEM] || '').trim();
+    const telefone = (cols[COL.TEL_CLI] || '').trim();
+
+    if(!cliente && !veiculo) { errors.push(`Linha ${idx+1}: sem cliente/veículo`); return; }
+
+    const timeMatch = horarioRaw.match(/(\d{2}\/\d{2})\s*às\s*(\d{2}:\d{2})/);
+    let date = '', time = '';
+    if(timeMatch) { date = timeMatch[1]; time = timeMatch[2]; }
+    else { const jt = horarioRaw.match(/(\d{2}:\d{2})/); if(jt) time = jt[1]; }
+
+    let allObs = [];
+    if(obs) allObs.push(obs);
+    if(voltagem && /\d+v/i.test(voltagem)) allObs.push(voltagem);
+
+    services.push({
+      prestador, date, time, cliente, endereco,
+      lavagem: lavagem || 'Lavagem Completa',
+      veiculo, obs: allObs.join('. '), condo, telefone
+    });
+  });
+
+  return { services, errors };
+}
+
+function renderParseResult(container, services, errors) {
+  if(services.length === 0) {
+    container.innerHTML = `<div class="badge error">❌ Nenhum serviço válido encontrado.</div>` +
+      (errors.length ? `<div style="color:var(--text2);font-size:12px;margin-top:8px">${errors.join('<br>')}</div>` : '');
+    return false;
+  }
+
+  const byWasher = {};
+  services.forEach(s => { if(!byWasher[s.prestador]) byWasher[s.prestador] = []; byWasher[s.prestador].push(s); });
+
+  let html = `<div class="badge success">✅ ${services.length} serviço(s) — ${Object.keys(byWasher).length} lavador(es)</div>`;
+  html += `<div style="overflow-x:auto;margin-top:12px"><table class="preview-table"><thead><tr>
+    <th>Lavador</th><th>Hora</th><th>Cliente</th><th>Endereço</th><th>Cond.</th><th>Veículo</th><th>Lavagem</th><th>Obs</th>
+  </tr></thead><tbody>`;
+  services.forEach(s => {
+    html += `<tr><td>${esc(firstName(s.prestador))}</td><td>${esc(s.time)}</td><td>${esc(s.cliente)}</td>
+    <td>${esc(trunc(s.endereco,35))}</td><td>${esc(trunc(s.condo,20))}</td><td>${esc(s.veiculo)}</td>
+    <td>${esc(trunc(s.lavagem,20))}</td><td class="obs-cell">${esc(trunc(s.obs,40))}</td></tr>`;
+  });
+  html += '</tbody></table></div>';
+  if(errors.length) html += `<div style="margin-top:8px"><div class="badge warning">⚠️ ${errors.length} ignorada(s)</div></div>`;
+
+  container.innerHTML = html;
+  return true;
+}
+
+// ==================== FLOW 1: SEND ====================
+function sendParse() {
+  const raw = document.getElementById('send-paste').value;
+  const container = document.getElementById('send-parse-result');
+  if(!raw.trim()) { container.innerHTML=''; document.getElementById('send-step2').style.display='none'; sendParsedServices=[]; return; }
+
+  const {services, errors} = parseSheetData(raw);
+  sendParsedServices = services;
+  const ok = renderParseResult(container, services, errors);
+  document.getElementById('send-step2').style.display = ok ? 'block' : 'none';
+  document.getElementById('send-step3').style.display = 'none';
+}
+
+function sendGenerate() {
+  if(!sendParsedServices.length) return;
+
+  const byWasher = {};
+  sendParsedServices.forEach(s => { const k=s.prestador||'Sem nome'; if(!byWasher[k])byWasher[k]=[]; byWasher[k].push(s); });
+
+  const opts = {
+    aguardando: document.getElementById('send-chk-aguardando').checked,
+    deslocamento: document.getElementById('send-chk-desl').checked,
+    deslVal: document.getElementById('send-desl-amount').value.trim(),
+    custom: document.getElementById('send-chk-custom').checked,
+    customMsg: document.getElementById('send-custom-msg').value.trim()
+  };
+
+  const container = document.getElementById('send-output');
+  container.innerHTML = '';
+
+  Object.keys(byWasher).forEach(wName => {
+    const services = byWasher[wName].sort((a,b) => a.time.localeCompare(b.time));
+    const msg = buildWhatsAppMessage(firstName(wName), services[0].date, services, opts);
+    container.appendChild(createOutputBlock(firstName(wName), services.length, services[0].date, msg));
+  });
+
+  document.getElementById('send-step3').style.display = 'block';
+  document.getElementById('send-step3').scrollIntoView({behavior:'smooth'});
+}
+
+function sendReset() {
+  document.getElementById('send-paste').value = '';
+  document.getElementById('send-parse-result').innerHTML = '';
+  document.getElementById('send-step2').style.display = 'none';
+  document.getElementById('send-step3').style.display = 'none';
+  ['send-chk-aguardando','send-chk-desl','send-chk-custom'].forEach(id => document.getElementById(id).checked = false);
+  document.getElementById('send-desl-val').classList.remove('show');
+  document.getElementById('send-custom-val').classList.remove('show');
+  sendParsedServices = [];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ==================== FLOW 2: BUILD (AI) ====================
+const STANDARD_HOURS = ['08:15','10:45','13:15','15:30'];
+let lavadorState = []; // [{name, active, hours: {08:15:true, ...}}]
+
+function initLavadorState() {
+  let names = [...DEFAULT_LAVADORES];
+  if(buildParsedServices.length) {
+    const fromData = [...new Set(buildParsedServices.map(s => s.prestador).filter(Boolean))];
+    fromData.forEach(n => {
+      if(!names.some(d => d.toLowerCase() === n.toLowerCase())) names.push(n);
+    });
+  }
+
+  // Preserve existing state if names match
+  const existing = new Map(lavadorState.map(l => [l.name.toLowerCase(), l]));
+  lavadorState = names.map(n => {
+    const prev = existing.get(n.toLowerCase());
+    if(prev) return prev;
+    const hours = {};
+    STANDARD_HOURS.forEach(h => hours[h] = true);
+    return { name: firstName(n), active: true, hours };
+  });
+
+  renderLavadorList();
+}
+
+function renderLavadorList() {
+  const list = document.getElementById('lavador-list');
+  list.innerHTML = lavadorState.map((l, idx) => {
+    const activeClass = l.active ? 'active' : 'inactive';
+    const toggleClass = l.active ? 'on' : '';
+    const availCount = l.active ? Object.values(l.hours).filter(Boolean).length : 0;
+    const statusText = !l.active ? '❌ Indisponível' :
+      availCount === STANDARD_HOURS.length ? '✅ Dia inteiro' :
+      availCount === 0 ? '⚠️ Sem horários' :
+      `⏰ ${availCount} de ${STANDARD_HOURS.length} horários`;
+
+    let hoursHtml = '';
+    if(l.active) {
+      hoursHtml = `<div class="lavador-hours">${STANDARD_HOURS.map(h => {
+        const cls = l.hours[h] ? 'on' : 'off';
+        return `<span class="hour-chip ${cls}" onclick="toggleHour(${idx},'${h}')">${h}</span>`;
+      }).join('')}</div>`;
+    }
+
+    const isDefault = DEFAULT_LAVADORES.some(d => firstName(d).toLowerCase() === l.name.toLowerCase());
+
+    return `<div class="lavador-card ${activeClass}">
+      <div class="lavador-top">
+        <div class="lavador-left">
+          <button class="lavador-toggle ${toggleClass}" onclick="toggleLavador(${idx})"></button>
+          <span class="lavador-name">${esc(l.name)}</span>
+        </div>
+        <span class="lavador-status">${statusText}</span>
+        ${!isDefault ? `<button class="lavador-remove" onclick="removeLavador(${idx})" title="Remover">✕</button>` : ''}
+      </div>
+      ${hoursHtml}
+    </div>`;
+  }).join('');
+}
+
+function toggleLavador(idx) {
+  lavadorState[idx].active = !lavadorState[idx].active;
+  if(lavadorState[idx].active) {
+    // Re-enable all hours when toggling back on
+    STANDARD_HOURS.forEach(h => lavadorState[idx].hours[h] = true);
+  }
+  renderLavadorList();
+}
+
+function toggleHour(idx, hour) {
+  lavadorState[idx].hours[hour] = !lavadorState[idx].hours[hour];
+  renderLavadorList();
+}
+
+function addLavador() {
+  const input = document.getElementById('new-lavador-name');
+  const name = input.value.trim();
+  if(!name) return;
+  if(lavadorState.some(l => l.name.toLowerCase() === name.toLowerCase())) {
+    alert('Lavador já existe na lista.');
+    return;
+  }
+  const hours = {};
+  STANDARD_HOURS.forEach(h => hours[h] = true);
+  lavadorState.push({ name: firstName(name), active: true, hours });
+  input.value = '';
+  renderLavadorList();
+}
+
+function removeLavador(idx) {
+  const name = lavadorState[idx].name;
+  if(!confirm(`Remover ${name} da lista?`)) return;
+  lavadorState.splice(idx, 1);
+  renderLavadorList();
+}
+
+function getAvailableLavadores() {
+  return lavadorState
+    .filter(l => l.active && Object.values(l.hours).some(Boolean))
+    .map(l => {
+      const blocked = STANDARD_HOURS.filter(h => !l.hours[h]);
+      if(blocked.length === 0) return l.name;
+      return `${l.name} (indisponível: ${blocked.join(', ')})`;
+    });
+}
+
+function buildParse() {
+  const raw = document.getElementById('build-paste').value;
+  const container = document.getElementById('build-parse-result');
+  if(!raw.trim()) { container.innerHTML=''; document.getElementById('build-step2').style.display='none'; document.getElementById('build-step3').style.display='none'; buildParsedServices=[]; return; }
+
+  const {services, errors} = parseSheetData(raw);
+  buildParsedServices = services;
+  const ok = renderParseResult(container, services, errors);
+  document.getElementById('build-step2').style.display = ok ? 'block' : 'none';
+  document.getElementById('build-step3').style.display = ok ? 'block' : 'none';
+  document.getElementById('build-result').style.display = 'none';
+  if(ok) initLavadorState();
+}
+
+async function buildGenerate() {
+  if(!buildParsedServices.length) { alert('Cole os agendamentos primeiro.'); return; }
+  if(!currentPrompt) { alert('Carregue o arquivo de prompt (.md) com as regras de divisão.'); return; }
+
+  const available = getAvailableLavadores();
+  if(!available.length) { alert('Selecione pelo menos um lavador disponível.'); return; }
+
+  const aguardando = document.getElementById('build-chk-aguardando').checked;
+
+  // Build detailed availability info
+  const availDetail = lavadorState
+    .filter(l => l.active && Object.values(l.hours).some(Boolean))
+    .map(l => {
+      const avail = STANDARD_HOURS.filter(h => l.hours[h]);
+      const blocked = STANDARD_HOURS.filter(h => !l.hours[h]);
+      if(blocked.length === 0) return `- ${l.name}: DISPONÍVEL DIA INTEIRO (${STANDARD_HOURS.join(', ')})`;
+      return `- ${l.name}: DISPONÍVEL apenas ${avail.join(', ')} | ❌ BLOQUEADO: ${blocked.join(', ')}`;
+    }).join('\n');
+
+  // Build context for AI
+  const date = buildParsedServices[0]?.date || 'XX/XX';
+  const servicesSummary = buildParsedServices.map((s,i) =>
+    `${i+1}. ${s.time} | ${s.cliente} | ${s.endereco} | Cond: ${s.condo} | ${s.veiculo} | ${s.lavagem} | Obs: ${s.obs || 'nenhuma'}`
+  ).join('\n');
+
+  const userMessage = `Preciso montar a agenda para o dia ${date}.
+
+DISPONIBILIDADE DOS LAVADORES:
+${availDetail}
+
+Lavadores INDISPONÍVEIS hoje: ${lavadorState.filter(l => !l.active).map(l => l.name).join(', ') || 'nenhum'}
+
+AGENDAMENTOS DO DIA (${buildParsedServices.length} total):
+${servicesSummary}
+
+${aguardando ? 'NOTA: Esta é uma agenda preliminar. Estamos aguardando novos agendamentos.' : ''}
+
+Por favor:
+1. Divida os agendamentos entre os lavadores disponíveis seguindo TODAS as regras do prompt (clusters, restrições do Bruno, limite 15km, balanceamento, continuidade de condomínio, etc.)
+2. RESPEITE as restrições de horário — se um lavador está bloqueado num horário, NÃO aloque nada para ele nesse horário
+3. Explique brevemente o raciocínio da divisão (3-5 linhas)
+4. Para CADA lavador, gere a mensagem WhatsApp no formato correto
+
+IMPORTANTE - Formato de resposta OBRIGATÓRIO:
+Responda EXATAMENTE neste formato JSON (sem markdown, sem backticks):
+{"reasoning":"Explicação breve do raciocínio...","assignments":[{"washer":"Nome","services":[{"time":"08:15","client":"Nome Cliente","address":"Endereço completo","condo":"Nome Condomínio","vehicle":"Veículo","wash_type":"Lavagem Completa","notes":"observações ou vazio"}]}]}`;
+
+  // Show loading
+  document.getElementById('build-step3').style.display = 'none';
+  document.getElementById('build-result').style.display = 'none';
+  document.getElementById('build-loading').style.display = 'block';
+  document.getElementById('build-loading').scrollIntoView({behavior:'smooth'});
+
+  try {
+    const systemPrompt = currentPrompt + `\n\nIMPORTANTE: Responda APENAS com JSON válido, sem markdown, sem backticks, sem texto antes ou depois. O JSON deve seguir exatamente o schema pedido pelo usuário.`;
+
+    const response = await fetch(SUPABASE_FN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app-pin': CORRECT_PIN,
+      },
+      body: JSON.stringify({
+        system: systemPrompt,
+        userMessage: userMessage,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+      })
+    });
+
+    const data = await response.json();
+
+    if(data.error) {
+      throw new Error(data.error.message || 'Erro na API');
+    }
+
+    const text = data.content.map(c => c.text || '').join('').trim();
+
+    // Parse JSON response
+    let result;
+    try {
+      const clean = text.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+      result = JSON.parse(clean);
+    } catch(e) {
+      // Fallback: show raw AI response
+      document.getElementById('build-loading').style.display = 'none';
+      document.getElementById('build-result').style.display = 'block';
+      document.getElementById('build-ai-reasoning').innerHTML = `<div class="badge warning">⚠️ A IA retornou formato livre. Veja abaixo:</div>`;
+      document.getElementById('build-output').innerHTML = `<div class="output-box">${esc(text)}</div>
+        <div class="output-actions"><button class="btn btn-copy" onclick="copyRaw(this)">📋 Copiar Tudo</button></div>`;
+      return;
+    }
+
+    // Render structured result
+    document.getElementById('build-loading').style.display = 'none';
+    document.getElementById('build-result').style.display = 'block';
+
+    // Reasoning
+    document.getElementById('build-ai-reasoning').innerHTML = `
+      <div class="badge info">🧠 Raciocínio da IA</div>
+      <div style="color:var(--text2);font-size:13px;line-height:1.6;padding:12px 16px;background:var(--bg);border-radius:10px;margin-top:8px">${esc(result.reasoning || '')}</div>
+    `;
+
+    // Build output messages
+    const outContainer = document.getElementById('build-output');
+    outContainer.innerHTML = '';
+
+    const opts = {
+      aguardando: aguardando,
+      deslocamento: false,
+      deslVal: '',
+      custom: false,
+      customMsg: ''
+    };
+
+    (result.assignments || []).forEach(a => {
+      const wName = a.washer;
+      const svcs = (a.services || []).sort((x,y) => (x.time||'').localeCompare(y.time||''));
+
+      const mapped = svcs.map(s => ({
+        time: s.time || '',
+        cliente: s.client || '',
+        endereco: s.address || '',
+        condo: s.condo || '',
+        veiculo: s.vehicle || '',
+        lavagem: s.wash_type || 'Lavagem Completa',
+        obs: s.notes || ''
+      }));
+
+      const msg = buildWhatsAppMessage(firstName(wName), date, mapped, opts);
+      outContainer.appendChild(createOutputBlock(firstName(wName), svcs.length, date, msg));
+    });
+
+    document.getElementById('build-result').scrollIntoView({behavior:'smooth'});
+
+  } catch(err) {
+    document.getElementById('build-loading').style.display = 'none';
+    document.getElementById('build-step3').style.display = 'block';
+    alert(`Erro ao chamar IA: ${err.message}\n\nVerifique a conexão e tente novamente.`);
+  }
+}
+
+function buildReset() {
+  document.getElementById('build-paste').value = '';
+  document.getElementById('build-parse-result').innerHTML = '';
+  document.getElementById('build-step2').style.display = 'none';
+  document.getElementById('build-step3').style.display = 'none';
+  document.getElementById('build-loading').style.display = 'none';
+  document.getElementById('build-result').style.display = 'none';
+  document.getElementById('build-chk-aguardando').checked = false;
+  buildParsedServices = [];
+  lavadorState = [];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ==================== PROMPT MANAGEMENT ====================
+function loadPromptFile(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    currentPrompt = e.target.result;
+    currentPromptName = file.name;
+    updatePromptUI();
+    // Save to localStorage
+    try { localStorage.setItem('lavago_prompt', currentPrompt); localStorage.setItem('lavago_prompt_name', currentPromptName); } catch(e) {}
+  };
+  reader.readAsText(file);
+}
+
+function loadSavedPrompt() {
+  try {
+    const saved = localStorage.getItem('lavago_prompt');
+    const name = localStorage.getItem('lavago_prompt_name');
+    if(saved) { currentPrompt = saved; currentPromptName = name || 'prompt.md'; updatePromptUI(); }
+  } catch(e) {}
+}
+
+function updatePromptUI() {
+  const dot = document.getElementById('prompt-dot');
+  const label = document.getElementById('prompt-label');
+  const actions = document.getElementById('prompt-actions');
+
+  if(currentPrompt) {
+    dot.className = 'dot active';
+    const charCount = currentPrompt.length;
+    label.textContent = `✅ ${currentPromptName} (${(charCount/1000).toFixed(1)}k caracteres)`;
+    actions.hidden = false;
+  } else {
+    dot.className = 'dot none';
+    label.textContent = 'Nenhum prompt carregado';
+    actions.hidden = true;
+  }
+}
+
+function previewPrompt() {
+  document.getElementById('prompt-preview-text').textContent = currentPrompt || '';
+  document.getElementById('prompt-modal').style.display = 'block';
+}
+
+function clearPrompt() {
+  if(!confirm('Remover o prompt carregado?')) return;
+  currentPrompt = null;
+  currentPromptName = null;
+  try { localStorage.removeItem('lavago_prompt'); localStorage.removeItem('lavago_prompt_name'); } catch(e) {}
+  updatePromptUI();
+  // Reset file input
+  document.querySelector('#file-upload-area input').value = '';
+}
+
+// ==================== SHARED MESSAGE BUILDER ====================
+function buildWhatsAppMessage(washerName, dateStr, services, opts) {
+  let msg = `Olá, ${washerName}! Tudo certo? Segue sua agenda para ${dateStr} ✅`;
+
+  if(opts.aguardando) msg += `\nEstamos aguardando novos agendamentos para completar a sua agenda.`;
+  if(opts.deslocamento) msg += opts.deslVal ? `\nEssa agenda terá ajuda de deslocamento de ${opts.deslVal}.` : `\nEssa agenda terá ajuda de deslocamento.`;
+  if(opts.custom && opts.customMsg) msg += `\n${opts.customMsg}`;
+
+  services.forEach(s => {
+    const clock = CLOCKS[s.time] || '🕐';
+    const vEmoji = isMoto(s.veiculo) ? '🏍️' : '🚘';
+
+    msg += `\n\n${clock} ${s.time} – ${s.cliente}`;
+
+    if(s.endereco || s.condo) {
+      let addr = '📍 ';
+      if(s.endereco) addr += fmtAddr(s.endereco);
+      if(s.condo) {
+        if(s.endereco) addr += ` — Condomínio: ${fmtCondo(s.condo)}`;
+        else addr += `Condomínio: ${fmtCondo(s.condo)}`;
+      }
+      msg += `\n${addr}`;
+    }
+
+    msg += `\n${vEmoji} ${capVehicle(s.veiculo)} (${capFirst(s.lavagem)})`;
+    if(s.obs) msg += `\n⚠️ ${s.obs}`;
+  });
+
+  msg += `\n\nConfira o Guia para Lavadores: https://www.lavago.com.br/guia-prestadores`;
+  msg += `\n\nPor favor, confirme o recebimento respondendo com "ok".`;
+
+  return msg;
+}
+
+function createOutputBlock(name, count, date, msg) {
+  const id = 'out-' + slug(name) + '-' + Date.now() + Math.random().toString(36).substr(2,4);
+  const block = document.createElement('div');
+  block.className = 'washer-output';
+  block.innerHTML = `
+    <div class="washer-output-header">
+      <span class="washer-output-name">📋 ${esc(name)}</span>
+      <span class="washer-output-count">${count} serviço(s) — ${date}</span>
+    </div>
+    <div class="output-box" id="${id}">${esc(msg)}</div>
+    <div class="output-actions">
+      <button class="btn btn-copy" onclick="copyMsg(this,'${id}')">📋 Copiar</button>
+    </div>
+  `;
+  return block;
+}
+
+// ==================== COPY ====================
+function copyMsg(btn, outId) {
+  const text = document.getElementById(outId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent='✅ Copiado!'; btn.classList.add('copied'); showToast();
+    setTimeout(()=>{btn.textContent='📋 Copiar';btn.classList.remove('copied')},2000);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast();
+  });
+}
+
+function copyRaw(btn) {
+  const text = document.querySelector('#build-output .output-box')?.textContent || '';
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✅ Copiado!';btn.classList.add('copied');showToast();
+    setTimeout(()=>{btn.textContent='📋 Copiar Tudo';btn.classList.remove('copied')},2000);
+  });
+}
+
+function showToast() {
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ==================== FLOW 3: PAYMENT ====================
+let payDiscountCount = 0;
+
+function payInit() {
+  const select = document.getElementById('pay-washer');
+  // Keep first option
+  select.innerHTML = '<option value="">Selecione...</option>';
+  DEFAULT_LAVADORES.forEach(n => {
+    const name = firstName(n);
+    select.innerHTML += `<option value="${name}">${name}</option>`;
+  });
+  payCalc();
+}
+
+function payLoadDefaults() {
+  // Could load per-washer defaults in future
+  payCalc();
+}
+
+function payToggleMinimo() {
+  const show = document.getElementById('pay-chk-minimo').checked;
+  document.getElementById('pay-minimo-group').style.display = show ? 'block' : 'none';
+  payCalc();
+}
+
+function payToggleComodato() {
+  const show = document.getElementById('pay-chk-comodato').checked;
+  document.getElementById('pay-comodato-fields').style.display = show ? 'block' : 'none';
+  payCalc();
+}
+
+function payAddDiscount() {
+  payDiscountCount++;
+  const id = payDiscountCount;
+  const list = document.getElementById('pay-discounts-list');
+  const div = document.createElement('div');
+  div.className = 'discount-entry';
+  div.id = `discount-${id}`;
+  div.innerHTML = `
+    <div class="discount-header">
+      <span class="discount-title">Desconto #${id}</span>
+      <button class="btn-remove-discount" onclick="payRemoveDiscount(${id})">✕</button>
+    </div>
+    <div class="pay-row">
+      <div class="pay-group">
+        <label>Descrição</label>
+        <input type="text" id="disc-desc-${id}" placeholder="Ex: Desconto por falta" oninput="payCalc()">
+      </div>
+      <div class="pay-group">
+        <label>Valor (R$)</label>
+        <input type="number" id="disc-val-${id}" value="0" step="0.01" oninput="payCalc()">
+      </div>
+    </div>
+  `;
+  list.appendChild(div);
+  payCalc();
+}
+
+function payRemoveDiscount(id) {
+  const el = document.getElementById(`discount-${id}`);
+  if(el) el.remove();
+  payCalc();
+}
+
+function payGetDiscounts() {
+  const discounts = [];
+  document.querySelectorAll('#pay-discounts-list .discount-entry').forEach(el => {
+    const id = el.id.split('-')[1];
+    const desc = document.getElementById(`disc-desc-${id}`)?.value.trim() || 'Desconto';
+    const val = parseFloat(document.getElementById(`disc-val-${id}`)?.value) || 0;
+    if(val > 0) discounts.push({ desc, val });
+  });
+  return discounts;
+}
+
+function payCalc() {
+  const cars = parseInt(document.getElementById('pay-cars').value) || 0;
+  const carPrice = parseFloat(document.getElementById('pay-car-price').value) || 0;
+  const pickups = parseInt(document.getElementById('pay-pickups').value) || 0;
+  const pickupPrice = parseFloat(document.getElementById('pay-pickup-price').value) || 0;
+  const desloc = parseFloat(document.getElementById('pay-desloc').value) || 0;
+  const bonus = parseFloat(document.getElementById('pay-bonus').value) || 0;
+
+  // Comodato
+  const hasComodato = document.getElementById('pay-chk-comodato').checked;
+  let abatPorLav = 0, abatMinimo = 0, abatNatural = 0, abatimento = 0;
+  if(hasComodato) {
+    const totalLavagens = cars + pickups;
+    abatPorLav = parseFloat(document.getElementById('pay-abat-por-lav').value) || 0;
+    abatMinimo = parseFloat(document.getElementById('pay-abat-minimo').value) || 0;
+    abatNatural = totalLavagens * abatPorLav;
+    abatimento = Math.max(abatMinimo, abatNatural);
+    document.getElementById('pay-abat-calc').value = `${fmtMoney(abatNatural)} (natural) → ${fmtMoney(abatimento)} (efetivo)`;
+  }
+
+  const carPriceLiq = hasComodato ? carPrice - abatPorLav : carPrice;
+  const pickupPriceLiq = hasComodato ? pickupPrice - abatPorLav : pickupPrice;
+  const carsSubLiq = cars * carPriceLiq;
+  const pickupsSubLiq = pickups * pickupPriceLiq;
+  document.getElementById('pay-cars-sub').value = fmtMoney(carsSubLiq) + (hasComodato ? ' (líq.)' : '');
+  document.getElementById('pay-pickups-sub').value = fmtMoney(pickupsSubLiq) + (hasComodato && pickups > 0 ? ' (líq.)' : '');
+
+  const subtotalLiq = carsSubLiq + pickupsSubLiq + desloc + bonus;
+  const abatExtra = hasComodato && abatMinimo > abatNatural ? abatMinimo - abatNatural : 0;
+  const totalAposAbat = subtotalLiq - abatExtra;
+
+  // Mínimo garantido
+  const hasMinimo = document.getElementById('pay-chk-minimo').checked;
+  const minimo = hasMinimo ? (parseFloat(document.getElementById('pay-minimo').value) || 0) : 0;
+
+  const discounts = payGetDiscounts();
+  const totalDescontos = discounts.reduce((sum, d) => sum + d.val, 0);
+
+  let totalReceber, complemento = 0;
+  if(hasMinimo && totalAposAbat < minimo) {
+    complemento = minimo - totalAposAbat;
+    totalReceber = minimo - totalDescontos;
+  } else {
+    totalReceber = totalAposAbat - totalDescontos;
+  }
+
+  // Render summary
+  let html = '';
+  html += `<div class="pay-summary-row"><span class="label">🚗 ${cars} veículo(s) × ${fmtMoney(carPriceLiq)}${hasComodato?' (líq.)':''}</span><span class="value">${fmtMoney(carsSubLiq)}</span></div>`;
+  if(pickups > 0) html += `<div class="pay-summary-row"><span class="label">🛻 ${pickups} pickup(s) × ${fmtMoney(pickupPriceLiq)}${hasComodato?' (líq.)':''}</span><span class="value">${fmtMoney(pickupsSubLiq)}</span></div>`;
+  if(desloc > 0) html += `<div class="pay-summary-row"><span class="label">⛽ Deslocamento</span><span class="value">${fmtMoney(desloc)}</span></div>`;
+  if(bonus > 0) html += `<div class="pay-summary-row"><span class="label">🎁 Bônus</span><span class="value">${fmtMoney(bonus)}</span></div>`;
+  html += `<div class="pay-summary-row" style="border-top:1px solid var(--border);padding-top:8px;margin-top:4px"><span class="label"><b>Subtotal</b></span><span class="value">${fmtMoney(subtotalLiq)}</span></div>`;
+  if(hasComodato && abatExtra > 0) html += `<div class="pay-summary-row"><span class="label">🔧 Complemento abat. mínimo</span><span class="value red">-${fmtMoney(abatExtra)}</span></div>`;
+  if(hasMinimo && complemento > 0) html += `<div class="pay-summary-row"><span class="label">➡️ Complemento mínimo garantido</span><span class="value green">+${fmtMoney(complemento)}</span></div>`;
+  if(hasMinimo) html += `<div class="pay-summary-row"><span class="label">Mínimo garantido</span><span class="value">${fmtMoney(minimo)}</span></div>`;
+  discounts.forEach(d => { html += `<div class="pay-summary-row"><span class="label">➖ ${esc(d.desc)}</span><span class="value red">-${fmtMoney(d.val)}</span></div>`; });
+  html += `<div class="pay-summary-row total"><span class="label">💰 Total a Receber</span><span class="value green">${fmtMoney(totalReceber)}</span></div>`;
+
+  document.getElementById('pay-summary').innerHTML = html;
+}
+
+function payGenerate() {
+  const washerSelect = document.getElementById('pay-washer').value;
+  const washerCustom = document.getElementById('pay-washer-custom').value.trim();
+  const washerName = washerCustom || washerSelect;
+  if(!washerName) { alert('Selecione ou digite o nome do lavador.'); return; }
+
+  const periodStart = document.getElementById('pay-period-start').value;
+  const periodEnd = document.getElementById('pay-period-end').value;
+  const payDateText = document.getElementById('pay-date-text').value.trim() || 'em breve';
+
+  if(!periodStart || !periodEnd) { alert('Preencha o período de apuração.'); return; }
+
+  const [ys,ms,ds] = periodStart.split('-');
+  const [ye,me,de] = periodEnd.split('-');
+  const periodStr = `${ds}/${ms} a ${de}/${me}`;
+
+  const cars = parseInt(document.getElementById('pay-cars').value) || 0;
+  const carPrice = parseFloat(document.getElementById('pay-car-price').value) || 0;
+  const pickups = parseInt(document.getElementById('pay-pickups').value) || 0;
+  const pickupPrice = parseFloat(document.getElementById('pay-pickup-price').value) || 0;
+  const desloc = parseFloat(document.getElementById('pay-desloc').value) || 0;
+  const bonus = parseFloat(document.getElementById('pay-bonus').value) || 0;
+  const bonusDesc = document.getElementById('pay-bonus-desc').value.trim();
+
+  const hasComodato = document.getElementById('pay-chk-comodato').checked;
+  const totalLavagens = cars + pickups;
+  let abatPorLav = 0, abatMinimo = 0, abatNatural = 0, abatimento = 0;
+  if(hasComodato) {
+    abatPorLav = parseFloat(document.getElementById('pay-abat-por-lav').value) || 0;
+    abatMinimo = parseFloat(document.getElementById('pay-abat-minimo').value) || 0;
+    abatNatural = totalLavagens * abatPorLav;
+    abatimento = Math.max(abatMinimo, abatNatural);
+  }
+
+  // Valores líquidos (já descontando abatimento por lavagem)
+  const carPriceLiq = hasComodato ? carPrice - abatPorLav : carPrice;
+  const pickupPriceLiq = hasComodato ? pickupPrice - abatPorLav : pickupPrice;
+  const carsSubLiq = cars * carPriceLiq;
+  const pickupsSubLiq = pickups * pickupPriceLiq;
+  const subtotalLiq = carsSubLiq + pickupsSubLiq + desloc + bonus;
+
+  // Se tem abatimento mínimo maior que o natural, precisa descontar a diferença extra
+  const abatExtra = hasComodato && abatMinimo > abatNatural ? abatMinimo - abatNatural : 0;
+  const totalAposAbat = subtotalLiq - abatExtra;
+
+  // Mínimo garantido
+  const hasMinimo = document.getElementById('pay-chk-minimo').checked;
+  const minimo = hasMinimo ? (parseFloat(document.getElementById('pay-minimo').value) || 0) : 0;
+
+  // Descontos extras
+  const discounts = payGetDiscounts();
+  const totalDescontos = discounts.reduce((sum, d) => sum + d.val, 0);
+
+  let totalReceber;
+  let complemento = 0;
+  if(hasMinimo && totalAposAbat < minimo) {
+    complemento = minimo - totalAposAbat;
+    totalReceber = minimo - totalDescontos;
+  } else {
+    totalReceber = totalAposAbat - totalDescontos;
+  }
+
+  // Build message
+  let msg = `Fala ${washerName}! Tudo certo?\n\nSegue o resumo dos pagamentos da semana de ${periodStr}:\n`;
+
+  msg += `\n🚗 ${cars} veículo${cars!==1?'s':''} x ${fmtMoney(carPriceLiq)} = ${fmtMoney(carsSubLiq)}`;
+  if(pickups > 0) msg += `\n🛻 ${pickups} pick-up / veículo grande x ${fmtMoney(pickupPriceLiq)} = ${fmtMoney(pickupsSubLiq)}`;
+  if(desloc > 0) msg += `\n⛽ Ajuda de deslocamento: ${fmtMoney(desloc)}`;
+  if(bonus > 0) msg += `\n🎁 ${bonusDesc || 'Bônus'}: ${fmtMoney(bonus)}`;
+
+  msg += `\n\nTotal: ${fmtMoney(subtotalLiq)}`;
+
+  if(hasMinimo) {
+    msg += `\n\n➡️ Mínimo semanal garantido: ${fmtMoney(minimo)}`;
+    if(hasComodato) {
+      msg += `\n– Desconto mínimo semanal da parcela dos equipamentos: ${fmtMoney(abatMinimo)}`;
+    }
+    if(complemento > 0) {
+      msg += `\nValor a ser completado para o mínimo: ${fmtMoney(complemento)}`;
+    }
+  }
+
+  if(hasComodato && !hasMinimo && abatExtra > 0) {
+    msg += `\n\n🔧 Desconto adicional parcela equipamentos: -${fmtMoney(abatExtra)}`;
+  }
+
+  discounts.forEach(d => {
+    msg += `\n➖ ${d.desc}: -${fmtMoney(d.val)}`;
+  });
+
+  msg += `\n\n💰 Total a receber: ${fmtMoney(totalReceber)}`;
+  msg += `\n\n📅 Pagamento será realizado ${payDateText}.`;
+
+  if(hasComodato) {
+    msg += `\n\n🔧 Informativo: O abatimento natural desta semana foi de ${fmtMoney(abatNatural)} (${totalLavagens} lavagen${totalLavagens!==1?'s':''} x ${fmtMoney(abatPorLav)}).`;
+    if(abatNatural >= abatMinimo) {
+      msg += ` Como o abatimento mínimo é de ${fmtMoney(abatMinimo)}, não foi necessário completar. Total abatido esta semana: ${fmtMoney(abatNatural)}.`;
+    } else {
+      const diff = abatMinimo - abatNatural;
+      msg += ` Como o abatimento mínimo é de ${fmtMoney(abatMinimo)}, foi necessário completar ${fmtMoney(diff)}. Total abatido esta semana: ${fmtMoney(abatMinimo)}.`;
+    }
+  }
+
+  document.getElementById('pay-output-box').textContent = msg;
+  document.getElementById('pay-output-section').style.display = 'block';
+  document.getElementById('pay-output-section').scrollIntoView({behavior:'smooth'});
+}
+
+function payReset() {
+  ['pay-cars','pay-pickups','pay-desloc','pay-bonus'].forEach(id => document.getElementById(id).value = '0');
+  document.getElementById('pay-car-price').value = '50';
+  document.getElementById('pay-pickup-price').value = '60';
+  document.getElementById('pay-washer').value = '';
+  document.getElementById('pay-washer-custom').value = '';
+  document.getElementById('pay-period-start').value = '';
+  document.getElementById('pay-period-end').value = '';
+  document.getElementById('pay-date-text').value = '';
+  document.getElementById('pay-bonus-desc').value = '';
+  document.getElementById('pay-chk-minimo').checked = false;
+  document.getElementById('pay-chk-comodato').checked = false;
+  document.getElementById('pay-minimo-group').style.display = 'none';
+  document.getElementById('pay-comodato-fields').style.display = 'none';
+  document.getElementById('pay-discounts-list').innerHTML = '';
+  document.getElementById('pay-output-section').style.display = 'none';
+  payDiscountCount = 0;
+  payCalc();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function fmtMoney(v) {
+  return 'R$ ' + v.toFixed(2).replace('.', ',');
+}
+
+// ==================== HELPERS ====================
+function esc(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function trunc(s,n){return (!s)?'':s.length>n?s.slice(0,n)+'…':s}
+function firstName(full){if(!full)return '';const p=full.trim().split(/\s+/);return p[0].charAt(0).toUpperCase()+p[0].slice(1).toLowerCase()}
+function slug(s){return (s||'').replace(/[^a-zA-Z0-9]/g,'_').toLowerCase()}
+function isMoto(v){return v&&/\b(moto|pcx|cg\s|honda cg|biz|pop|factor|fazer|cb\s|xre|bros)\b/i.test(v)}
+function capVehicle(v){return v?v.replace(/\b\w/g,c=>c.toUpperCase()):''}
+function capFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s}
+function fmtAddr(a){return a?a.replace(/\s+/g,' ').replace(/\s*,\s*/g,', ').trim():''}
+function fmtCondo(c){return c?c.trim().replace(/\b\w/g,x=>x.toUpperCase()):''}
+</script>
+</body>
+</html>
