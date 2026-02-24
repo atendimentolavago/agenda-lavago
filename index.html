@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LavaGo — Painel Operacional</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#242836; --border:#2e3344;
+  --text:#e8eaf0; --text2:#8b90a0; --accent:#3b82f6; --accent-hover:#2563eb;
+  --green:#22c55e; --green-bg:#22c55e15; --orange:#f59e0b; --orange-bg:#f59e0b12;
+  --red:#ef4444; --red-bg:#ef444415; --purple:#a855f7; --purple-bg:#a855f715;
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ===== PIN ===== */
+#pin-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.pin-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:48px 40px;text-align:center;max-width:380px;width:100%}
+.logo{font-size:28px;font-weight:700;margin-bottom:8px}.logo span{color:var(--accent)}
+.pin-subtitle{color:var(--text2);font-size:14px;margin-bottom:32px}
+.pin-input{display:flex;gap:10px;justify-content:center;margin-bottom:24px}
+.pin-input input{width:52px;height:60px;background:var(--surface2);border:2px solid var(--border);border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:24px;text-align:center;outline:none;transition:border-color .2s}
+.pin-input input:focus{border-color:var(--accent)}
+.pin-error{color:var(--red);font-size:13px;min-height:20px;margin-bottom:8px}
+
+/* ===== BUTTONS ===== */
+.btn{border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--accent);color:white;padding:12px 32px;font-size:15px;width:100%}.btn-primary:hover{background:var(--accent-hover)}
+.btn-green{background:var(--green);color:#0a1628;padding:14px 32px;font-size:16px;font-weight:700;width:100%}.btn-green:hover{background:#16a34a}
+.btn-purple{background:var(--purple);color:white;padding:14px 32px;font-size:16px;font-weight:700;width:100%}.btn-purple:hover{background:#9333ea}
+.btn-secondary{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:12px 24px;font-size:14px}.btn-secondary:hover{border-color:var(--text2)}
+.btn-copy{background:var(--accent);color:white;padding:10px 20px;font-size:13px;flex:1}.btn-copy:hover{background:var(--accent-hover)}.btn-copy.copied{background:var(--green);color:#0a1628}
+.btn-sm{padding:8px 16px;font-size:13px}
+.btn-logout{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}.btn-logout:hover{color:var(--text);border-color:var(--text2)}
+.btn-back{background:transparent;border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}.btn-back:hover{color:var(--text);border-color:var(--text2)}
+.btn-danger{background:var(--red-bg);border:1px solid #ef444430;color:var(--red);padding:8px 16px;font-size:13px;border-radius:8px;font-family:'DM Sans',sans-serif;cursor:pointer}.btn-danger:hover{background:var(--red);color:white}
+
+/* ===== LAYOUT ===== */
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.app-title{font-size:20px;font-weight:700}.app-title span{color:var(--accent)}
+.header-actions{display:flex;align-items:center;gap:10px}
+.app-body{max-width:960px;margin:0 auto;padding:24px}
+
+/* ===== SECTIONS ===== */
+.section-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
+.section-title{font-size:16px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.section-title .num{background:var(--accent);color:white;min-width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.section-title .num.purple{background:var(--purple)}
+.section-desc{color:var(--text2);font-size:13px;margin-bottom:16px;line-height:1.5}
+
+/* ===== FORMS ===== */
+label{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:10px 12px;outline:none;transition:border-color .2s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+
+/* ===== CHECKBOXES ===== */
+.checkbox-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.checkbox-row input[type="checkbox"]{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.checkbox-row label{font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer}
+.extra-input{margin-top:8px;margin-bottom:8px;display:none}.extra-input.show{display:block}
+
+/* ===== BADGE ===== */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:12px}
+.badge.success{background:var(--green-bg);color:var(--green);border:1px solid #22c55e25}
+.badge.error{background:var(--red-bg);color:var(--red);border:1px solid #ef444425}
+.badge.warning{background:var(--orange-bg);color:var(--orange);border:1px solid #f59e0b25}
+.badge.info{background:var(--purple-bg);color:var(--purple);border:1px solid #a855f725}
+
+/* ===== TABLE ===== */
+.preview-table{width:100%;border-collapse:collapse;font-size:13px}
+.preview-table th{text-align:left;padding:8px 10px;background:var(--surface2);color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.preview-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.preview-table tr:last-child td{border-bottom:none}
+.preview-table .obs-cell{font-size:12px;color:var(--orange)}
+
+/* ===== OUTPUT ===== */
+.output-box{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;max-height:500px;overflow-y:auto}
+.output-actions{display:flex;gap:10px;margin-top:12px}
+.washer-output{margin-bottom:20px}
+.washer-output-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:10px 14px;background:var(--surface2);border-radius:8px}
+.washer-output-name{font-weight:600;font-size:15px}
+.washer-output-count{color:var(--text2);font-size:13px}
+
+/* ===== HUB ===== */
+.hub-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:20px}
+.hub-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;cursor:pointer;transition:all .25s;text-align:center;position:relative;overflow:hidden}
+.hub-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.hub-card.purple:hover{border-color:var(--purple)}
+.hub-icon{font-size:48px;margin-bottom:16px;display:block}
+.hub-card-title{font-size:18px;font-weight:700;margin-bottom:8px}
+.hub-card-desc{color:var(--text2);font-size:13px;line-height:1.5}
+.hub-card .tag{position:absolute;top:12px;right:12px;font-size:10px;padding:4px 10px;border-radius:20px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.tag-ready{background:var(--green-bg);color:var(--green);border:1px solid #22c55e30}
+.tag-ai{background:var(--purple-bg);color:var(--purple);border:1px solid #a855f730}
+
+/* ===== LAVADOR LIST ===== */
+.lavador-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.lavador-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;transition:all .2s}
+.lavador-card.active{border-color:var(--green);background:var(--green-bg)}
+.lavador-card.inactive{opacity:.5}
+.lavador-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lavador-left{display:flex;align-items:center;gap:10px;flex:1}
+.lavador-toggle{width:40px;height:22px;border-radius:11px;background:var(--border);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0}
+.lavador-toggle.on{background:var(--green)}
+.lavador-toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:white;transition:left .2s}
+.lavador-toggle.on::after{left:21px}
+.lavador-name{font-size:14px;font-weight:600}
+.lavador-status{font-size:11px;color:var(--text2);margin-left:auto}
+.lavador-remove{background:none;border:none;color:var(--text2);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;transition:all .15s}
+.lavador-remove:hover{color:var(--red);background:var(--red-bg)}
+.lavador-hours{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.hour-chip{padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;transition:all .15s;user-select:none}
+.hour-chip.on{background:var(--green-bg);border-color:#22c55e40;color:var(--green)}
+.hour-chip.off{background:var(--red-bg);border-color:#ef444430;color:var(--red);text-decoration:line-through}
+.add-lavador-row{display:flex;gap:8px;margin-top:4px}
+.add-lavador-row input{flex:1;max-width:220px}
+.btn-add-lav{background:var(--surface2);border:2px dashed var(--border);color:var(--text2);border-radius:10px;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;width:100%;transition:all .2s}
+.btn-add-lav:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ===== PROMPT MGMT ===== */
+
+/* ===== AI LOADING ===== */
+.ai-loading{text-align:center;padding:40px 20px}
+.ai-spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-loading-text{color:var(--text2);font-size:14px}
+.ai-loading-sub{color:var(--text2);font-size:12px;margin-top:4px;opacity:.7}
+
+/* ===== TOAST ===== */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#0a1628;padding:12px 20px;border-radius:10px;font-weight:600;font-size:14px;transform:translateY(80px);opacity:0;transition:all .3s ease;z-index:1000}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ===== SCREEN MGMT ===== */
+.screen{display:none}.screen.active{display:block}
+
+/* ===== SPREADSHEET TABLE ===== */
+.sheet-container{overflow-x:auto;margin-bottom:12px;border:1px solid var(--border);border-radius:12px}
+.sheet-table{width:100%;border-collapse:collapse;font-size:12px;min-width:900px}
+.sheet-table th{position:sticky;top:0;background:var(--surface2);color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:8px 6px;border-bottom:2px solid var(--border);text-align:left;white-space:nowrap;z-index:1}
+.sheet-table th.col-use{color:var(--green);background:#22c55e10}
+.sheet-table th.col-ignore{color:var(--text2);opacity:.4;font-style:italic}
+.sheet-table td{padding:6px;border-bottom:1px solid var(--border);vertical-align:top;max-width:180px;font-size:12px}
+.sheet-table td.col-use{background:#22c55e05}
+.sheet-table td.col-ignore{opacity:.3;font-size:11px}
+.sheet-table tr:hover td{background:var(--surface2)}
+.sheet-table tr:hover td.col-use{background:#22c55e10}
+.sheet-paste-zone{min-height:120px;border:2px dashed var(--border);border-radius:12px;background:var(--bg);padding:24px;text-align:center;transition:all .2s;cursor:text;position:relative}
+.sheet-paste-zone:focus-within{border-color:var(--accent)}
+.sheet-paste-zone .paste-hint{color:var(--text2);font-size:13px;pointer-events:none}
+.sheet-paste-zone .paste-hint-icon{font-size:32px;display:block;margin-bottom:8px}
+.sheet-paste-zone textarea{position:absolute;inset:0;opacity:0;cursor:text;width:100%;height:100%}
+.sheet-row-count{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.btn-clear-sheet{background:none;border:none;color:var(--text2);font-size:12px;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif}.btn-clear-sheet:hover{color:var(--red)}
+.pay-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.pay-row.triple{grid-template-columns:1fr 1fr 1fr}
+.pay-group{display:flex;flex-direction:column;gap:4px}
+.pay-group.full{grid-column:1/-1}
+.pay-group input,.pay-group select{width:100%}
+.discount-entry{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;position:relative}
+.discount-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.discount-title{font-size:13px;font-weight:600;color:var(--orange)}
+.btn-remove-discount{background:none;border:none;color:var(--text2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px}.btn-remove-discount:hover{color:var(--red)}
+.btn-add-discount{background:var(--surface2);border:2px dashed var(--border);color:var(--text2);border-radius:10px;padding:10px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;width:100%;transition:all .2s;margin-top:4px}.btn-add-discount:hover{border-color:var(--orange);color:var(--orange)}
+.pay-summary{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px}
+.pay-summary-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.pay-summary-row.total{border-top:2px solid var(--border);margin-top:8px;padding-top:12px;font-weight:700;font-size:16px}
+.pay-summary-row .label{color:var(--text2)}
+.pay-summary-row .value{font-weight:600}
+.pay-summary-row .value.green{color:var(--green)}
+.pay-summary-row .value.red{color:var(--red)}
+
+@media(max-width:640px){
+  .hub-grid{grid-template-columns:1fr}
+  .app-body{padding:16px}
+  .section-card{padding:16px}
+  .pin-card{padding:32px 24px}
+  .output-actions{flex-direction:column}
+  .lavador-grid{grid-template-columns:1fr 1fr}
+  .pay-row{grid-template-columns:1fr}
+  .pay-row.triple{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== PIN ===== -->
+<div id="pin-screen">
+  <div class="pin-card">
+    <div class="logo">Lava<span>Go</span></div>
+    <div class="pin-subtitle">Painel Operacional</div>
+    <div class="pin-input">
+      <input type="tel" maxlength="1" id="p1" autofocus>
+      <input type="tel" maxlength="1" id="p2">
+      <input type="tel" maxlength="1" id="p3">
+      <input type="tel" maxlength="1" id="p4">
+    </div>
+    <div class="pin-error" id="pin-error"></div>
+    <button class="btn btn-primary" onclick="checkPin()">Entrar</button>
+  </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app-screen" style="display:none">
+  <div class="app-header">
+    <div class="app-title">Lava<span>Go</span> — Painel</div>
+    <div class="header-actions">
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </div>
+  <div class="app-body">
+
+    <!-- HUB -->
+    <div class="screen active" id="screen-hub">
+      <div class="section-card" style="border:none;background:transparent;padding:0;text-align:center">
+        <h2 style="font-size:22px;font-weight:700;margin-bottom:4px">O que deseja fazer?</h2>
+        <p style="color:var(--text2);font-size:14px">Escolha uma das opções abaixo</p>
+      </div>
+      <div class="hub-grid">
+        <div class="hub-card" onclick="goTo('send')">
+          <span class="tag tag-ready">Pronto</span>
+          <span class="hub-icon">📋</span>
+          <div class="hub-card-title">Enviar Agenda</div>
+          <div class="hub-card-desc">Cole os dados do Sheets já divididos por lavador e gere as mensagens formatadas para WhatsApp.</div>
+        </div>
+        <div class="hub-card purple" onclick="goTo('build')">
+          <span class="tag tag-ai">✨ IA</span>
+          <span class="hub-icon">🧠</span>
+          <div class="hub-card-title">Montar Agenda</div>
+          <div class="hub-card-desc">Cole todos os agendamentos do dia e a IA divide entre os lavadores disponíveis, otimizando rotas.</div>
+        </div>
+        <div class="hub-card" onclick="goTo('pay')" style="border-color:var(--border)">
+          <span class="tag tag-ready">Pronto</span>
+          <span class="hub-icon">💰</span>
+          <div class="hub-card-title">Pagamento</div>
+          <div class="hub-card-desc">Gere o resumo semanal de pagamento dos lavadores formatado para WhatsApp.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLOW 1: ENVIAR AGENDA ===== -->
+    <div class="screen" id="screen-send">
+      <button class="btn-back" onclick="goTo('hub')">← Voltar</button>
+      <h2 style="font-size:20px;font-weight:700;margin:16px 0 4px">📋 Enviar Agenda</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Cole dados já divididos por lavador → gere mensagens formatadas</p>
+
+      <div class="section-card">
+        <div class="section-title"><span class="num">1</span> Colar Dados do Google Sheets</div>
+        <div class="section-desc">Selecione as linhas na planilha → Ctrl+C → clique em qualquer célula abaixo → Ctrl+V. Colunas <span style="color:var(--green)">verdes</span> são usadas na mensagem.</div>
+        <div class="sheet-container" id="send-sheet-container">
+          <table class="sheet-table" id="send-sheet-table">
+            <thead><tr id="send-sheet-header"></tr></thead>
+            <tbody id="send-sheet-body"></tbody>
+          </table>
+        </div>
+        <div class="sheet-row-count">
+          <span id="send-row-label" style="font-size:13px;color:var(--text2)">0 linha(s) com dados</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-clear-sheet" onclick="addSheetRows('send',5)">+ 5 linhas</button>
+            <button class="btn-clear-sheet" onclick="clearSheet('send')" style="color:var(--red)">✕ Limpar</button>
+          </div>
+        </div>
+        <div id="send-parse-result" style="margin-top:12px"></div>
+      </div>
+
+      <div class="section-card" id="send-step2" style="display:none">
+        <div class="section-title"><span class="num">2</span> Opções</div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="send-chk-aguardando">
+          <label for="send-chk-aguardando">Estamos aguardando novos agendamentos</label>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="send-chk-desl" onchange="document.getElementById('send-desl-val').classList.toggle('show',this.checked)">
+          <label for="send-chk-desl">Ajuda de deslocamento</label>
+        </div>
+        <div class="extra-input" id="send-desl-val">
+          <input type="text" id="send-desl-amount" placeholder="Ex: R$ 15,00" style="max-width:200px">
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="send-chk-custom" onchange="document.getElementById('send-custom-val').classList.toggle('show',this.checked)">
+          <label for="send-chk-custom">Mensagem extra</label>
+        </div>
+        <div class="extra-input" id="send-custom-val">
+          <input type="text" id="send-custom-msg" placeholder="Ex: Agenda preliminar">
+        </div>
+        <div style="margin-top:16px">
+          <button class="btn btn-green" onclick="sendGenerate()">✅ Gerar Mensagens</button>
+        </div>
+      </div>
+
+      <div class="section-card" id="send-step3" style="display:none">
+        <div class="section-title"><span class="num">3</span> Mensagens Prontas</div>
+        <div id="send-output"></div>
+        <div style="margin-top:16px">
+          <button class="btn btn-secondary" onclick="sendReset()">↺ Nova Agenda</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLOW 2: MONTAR AGENDA (AI) ===== -->
+    <div class="screen" id="screen-build">
+      <button class="btn-back" onclick="goTo('hub')">← Voltar</button>
+      <h2 style="font-size:20px;font-weight:700;margin:16px 0 4px">🧠 Montar Agenda com IA</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Cole todos os agendamentos → a IA divide pelos lavadores</p>
+
+      <!-- PASTE DATA -->
+      <div class="section-card">
+        <div class="section-title"><span class="num purple">1</span> Colar Agendamentos do Dia</div>
+        <div class="section-desc">Cole TODOS os agendamentos do dia. Clique numa célula e Ctrl+V.</div>
+        <div class="sheet-container" id="build-sheet-container">
+          <table class="sheet-table" id="build-sheet-table">
+            <thead><tr id="build-sheet-header"></tr></thead>
+            <tbody id="build-sheet-body"></tbody>
+          </table>
+        </div>
+        <div class="sheet-row-count">
+          <span id="build-row-label" style="font-size:13px;color:var(--text2)">0 linha(s) com dados</span>
+          <div style="display:flex;gap:8px">
+            <button class="btn-clear-sheet" onclick="addSheetRows('build',5)">+ 5 linhas</button>
+            <button class="btn-clear-sheet" onclick="clearSheet('build')" style="color:var(--red)">✕ Limpar</button>
+          </div>
+        </div>
+        <div id="build-parse-result" style="margin-top:12px"></div>
+      </div>
+
+      <!-- LAVADORES DISPONÍVEIS -->
+      <div class="section-card" id="build-step2" style="display:none">
+        <div class="section-title"><span class="num purple">2</span> Lavadores Disponíveis</div>
+        <div class="section-desc">Ative/desative lavadores e ajuste os horários disponíveis de cada um. Clique nos horários para bloquear/liberar.</div>
+        <div class="lavador-list" id="lavador-list"></div>
+        <div class="add-lavador-row" id="add-lavador-row">
+          <input type="text" id="new-lavador-name" placeholder="Nome do novo lavador" onkeydown="if(event.key==='Enter')addLavador()">
+          <button class="btn btn-secondary btn-sm" onclick="addLavador()">+ Adicionar</button>
+        </div>
+        <div style="margin-top:12px">
+          <div class="checkbox-row">
+            <input type="checkbox" id="build-chk-aguardando">
+            <label for="build-chk-aguardando">Agenda preliminar (aguardando novos agendamentos)</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- GENERATE -->
+      <div class="section-card" id="build-step3" style="display:none">
+        <div class="section-title"><span class="num purple">3</span> Montar com IA</div>
+        <button class="btn btn-purple" onclick="buildGenerate()" id="build-btn">🧠 Montar Agenda</button>
+      </div>
+
+      <!-- AI LOADING -->
+      <div class="section-card" id="build-loading" style="display:none">
+        <div class="ai-loading">
+          <div class="ai-spinner"></div>
+          <div class="ai-loading-text">A IA está montando a agenda...</div>
+          <div class="ai-loading-sub">Analisando rotas, clusters e balanceamento</div>
+        </div>
+      </div>
+
+      <!-- AI RESULT -->
+      <div class="section-card" id="build-result" style="display:none">
+        <div class="section-title"><span class="num purple">4</span> Resultado da IA</div>
+        <div id="build-ai-reasoning" style="margin-bottom:16px"></div>
+        <div id="build-output"></div>
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="buildReset()">↺ Recomeçar</button>
+          <button class="btn btn-secondary" onclick="buildGenerate()" title="Rodar novamente">🔄 Gerar novamente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FLOW 3: PAGAMENTO ===== -->
+    <div class="screen" id="screen-pay">
+      <button class="btn-back" onclick="goTo('hub')">← Voltar</button>
+      <h2 style="font-size:20px;font-weight:700;margin:16px 0 4px">💰 Pagamento Semanal</h2>
+      <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Calcule o pagamento de todos os lavadores de uma vez — mesma lógica da planilha</p>
+
+      <!-- PERÍODO -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">1</span> Período e Pagamento</div>
+        <div class="pay-row triple">
+          <div class="pay-group">
+            <label>Início do Período</label>
+            <input type="date" id="pay-period-start">
+          </div>
+          <div class="pay-group">
+            <label>Fim do Período</label>
+            <input type="date" id="pay-period-end">
+          </div>
+          <div class="pay-group">
+            <label>Data do Pagamento</label>
+            <input type="text" id="pay-date-text" placeholder="Ex: amanhã, sexta-feira" value="amanhã">
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA DE CÁLCULO -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">2</span> Cálculo por Lavador</div>
+        <div class="section-desc">Preencha as quantidades. Cálculos automáticos. Clique no nome para editar, no ⚙ para configurar mínimos/comodato.</div>
+        <div id="pay-cards"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <input type="text" id="pay-new-name" placeholder="Nome do novo lavador" style="max-width:200px" onkeydown="if(event.key==='Enter')payAddWasher()">
+          <button class="btn btn-secondary btn-sm" onclick="payAddWasher()">+ Adicionar Lavador</button>
+        </div>
+      </div>
+
+      <!-- GERAR -->
+      <div class="section-card">
+        <div class="section-title"><span class="num">3</span> Mensagens</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="payGenerateAll()">✅ Gerar Todas as Mensagens</button>
+          <button class="btn btn-secondary" onclick="payReset()">↺ Limpar Tudo</button>
+        </div>
+      </div>
+
+      <!-- OUTPUT -->
+      <div id="pay-output-all" style="display:none">
+        <div class="section-card">
+          <div class="section-title"><span class="num">4</span> Mensagens Prontas</div>
+          <div id="pay-messages"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast">✅ Copiado!</div>
+
+<script>
+// ==================== CONFIG ====================
+const CORRECT_PIN = '2025';
+
+// ⚠️ TROCAR PELO SEU PROJECT REF DO SUPABASE
+const SUPABASE_FN_URL = 'https://whfjpiiyrtwadeufazhz.supabase.co/functions/v1/agenda-ai';
+
+// ==================== SYSTEM PROMPT v5 (embutido) ====================
+const SYSTEM_PROMPT = `# SISTEMA LAVAGO — DIVISÃO DE AGENDAMENTOS
+
+Você recebe uma lista de agendamentos e a disponibilidade dos lavadores. Retorne a divisão otimizada em UMA ÚNICA resposta, sem perguntas.
+
+## LAVADORES
+
+| Lavador | Atende regiões | Prioridade (região base) | Restrições |
+|---------|---------------|-------------------------|------------|
+| Gabriel | Todas | 3 (Norte/Corrupira) | Nenhuma |
+| Bruno | 1 a 5 apenas | 4 (Norte/CECAP) | ❌ Terra Caxambu, Manacás, Buona Vita, Itovurucaia, Quinta do Pinhal |
+| Diego | Todas | 3 (Nordeste/Champirra) | Nenhuma |
+| William | Todas | 1 (Centro) | Nenhuma |
+| Ricardo | Todas | 2 (Noroeste/Jd Tulipas) | Nenhuma |
+| Carradini | Todas | 7 (Centro/Jd Vera Cruz) | Nenhuma |
+
+**Nota**: "William" = Jonathan William de Moura.
+
+## MICRO-REGIÕES
+
+| # | Região | Lavadores base | Cobertura alternativa |
+|---|--------|----------------|----------------------|
+| 1 | Centro | William, Carradini | Ricardo, Diego |
+| 2 | Oeste/Medeiros | Ricardo | Carradini, William |
+| 3 | Norte/Corrupira | Gabriel, Diego | Bruno |
+| 4 | Norte/CECAP | Bruno, Gabriel | Diego |
+| 5 | Leste | William, Diego | Ricardo |
+| 6 | Sudeste | Carradini, William | Ricardo |
+| 7 | Sul/Sudoeste | Carradini | William, Ricardo |
+| 8 | Urbano/Prédios | Qualquer | Por proximidade |
+
+## DE-PARA: CONDOMÍNIO → MICRO-REGIÃO
+
+Se o condomínio não estiver nesta lista, assume região 1.
+
+| Condomínio (variações de grafia) | Região |
+|---------------------------------|--------|
+| Athenas | 1 |
+| Bella Vitá / Bella Vitta / Bella Vittá / Bella Vittà | 3 |
+| Bosque do Horto | 1 |
+| Brisas de Jundiaí / Brisas jundiai / Brisas Jundiaí / Brisas do Lago | 1 |
+| Buona Vita / Buona Vitta | 7 |
+| Canto da Natureza / Canto natureza | 5 |
+| Casa de Rua | 1 |
+| Casa Toscana / Casas da Toscana / Casas da toscana - Medeiros | 2 |
+| Cond Reservatto / Reservatto / Reservatto Residenziale | 1 |
+| Condomínio Bella Vitta / Condomínio Bella Vitta Corrupira | 3 |
+| Condomínio Bosque do Horto | 1 |
+| Condomínio Brisas Jundiaí | 1 |
+| Condomínio Canto da Natureza | 5 |
+| Condomínio Ecovillage 2 (Eloy Chaves) | 2 |
+| Condomínio Nature Village 2 | 2 |
+| Condomínio Parque da Fazenda | 6 |
+| Condomínio Terras de Jundiaí | 1 |
+| Condomínio Vila Esmeralda / Vila Esmeralda | 1 |
+| Condomínio Vista Park | 1 |
+| Empresa | 1 |
+| Garden Resort | 4 |
+| Jardim Atenas | 1 |
+| Jardim Santa Teresa | 1 |
+| Kazas Alameda / Kazas alameda medeiros | 2 |
+| Malota | 1 |
+| Manacás / Manacas / Parque dos Manacás | 7 |
+| Nature Village / Nature vilage / Nature Village 1 / Nature VILLAGE I | 2 |
+| Nature 2 / Nature II / Nature Village 2 / Nature VILLAGE II / Nature Village2 / Vilage nature 2 / Nature 2 portaria 1 / Nature 2 portaria 2 | 2 |
+| Parque da Fazenda | 6 |
+| Portal da Colina | 1 |
+| Portal da Primavera | 1 |
+| Prédio | 8 |
+| Quinta do Pinhal | 7 |
+| Reserva da Mata / Reserva da Mata Rua das tamareiras | 3 |
+| Reserva da Serra | 2 |
+| Reserva Ermida / Reserva Ermida 1 | 2 |
+| Reserva Marajoara | 1 |
+| Residencial Conjunto das Palmeiras / Residencial das Palmeiras | 1 |
+| Residencial dos Ypes | 1 |
+| Residencial Quinta das Laranjeiras | 1 |
+| Residencial Terras Caxambu / Terra Caxambu / Terra de Caxambu | 7 |
+| Terras de Jundiaí / Terra de Jundiai / Terras dd Jundiai / Terras de Jundiaí. / Residencial Terras de Jundiaí | 1 |
+| Terras de São Carlos | 1 |
+| Toscana / Villaggio San Francesco / Villagio di San Francesco | 2 |
+| Village das Flores | 1 |
+
+## REGRAS (em ordem de prioridade)
+
+### R0 — HORÁRIO SAGRADO
+- NUNCA alterar o horário do cliente. Jamais sugerir troca.
+- Conflito → trocar LAVADOR, nunca horário.
+- Se impossível resolver → sinalizar DOUBLE BOOKING.
+
+### R1 — INTERVALO MÍNIMO DE 1H30
+- Um lavador precisa de no mínimo 1 hora e 30 minutos entre agendamentos.
+- Exceção: agendamentos no MESMO condomínio podem ter intervalo menor (mínimo 1h15).
+- Exemplo PROIBIDO: Gabriel às 08:15 em Brisas e às 09:00 em Reserva da Mata.
+- Exemplo OK: Gabriel às 08:15 em Brisas e às 10:00 em Reserva da Mata.
+- Exemplo OK: Gabriel às 08:15 em Brisas e às 09:15 em Brisas (mesmo condomínio).
+
+### R2 — CONTINUIDADE NO MESMO CONDOMÍNIO
+- Agendamentos no MESMO condomínio com diferença ≤ 2h → MESMO lavador.
+- Exceção: se causar desequilíbrio grave (R4).
+
+### R3 — MINIMIZAR DESLOCAMENTO
+- Priorizar lavador cuja região base = região do agendamento.
+- Se indisponível → região adjacente.
+- Evitar zigue-zague entre regiões distantes.
+
+### R4 — BALANCEAMENTO
+- Diferença máxima de 2 agendamentos entre quem tem mais e quem tem menos.
+- Se 10 agendamentos e 5 lavadores → 2-2-2-2-2 (não 4-3-1-1-1).
+- Se conflitar com proximidade → proximidade ganha, mas documentar.
+
+### R5 — RESTRIÇÕES DO BRUNO
+- Bruno NÃO atende regiões 6, 7, 8.
+- Bruno NÃO atende: Terra Caxambu, Manacás, Buona Vita, Itovurucaia, Quinta do Pinhal.
+
+### R6 — DISPONIBILIDADE PARCIAL
+- "manhã" → só alocar agendamentos até 12:00.
+- "tarde" → só alocar agendamentos a partir de 12:00.
+- "indisponível" → zero agendamentos.
+- Quando a disponibilidade incluir horários específicos, respeitar estritamente.
+
+## ALGORITMO DE ALOCAÇÃO (executar internamente)
+
+1. Parsear agendamentos → extrair hora, cliente, endereço, condomínio, carro, obs
+2. Para cada agendamento → lookup condomínio na tabela DE-PARA → micro-região
+3. Ordenar agendamentos por hora
+4. Agrupar por condomínio (grupos de continuidade)
+5. Para cada grupo/agendamento:
+   a. Filtrar lavadores: disponível + período correto + sem restrição para região
+   b. Filtrar por conflito: remover lavadores com agendamento a <1h30 (ou <1h15 se mesmo condomínio)
+   c. Dos restantes, priorizar: região base = região do agendamento
+   d. Dos restantes, priorizar: menor carga atual (balanceamento)
+   e. Alocar
+   f. Se nenhum lavador disponível → marcar DOUBLE BOOKING
+6. Validar: nenhum horário alterado, nenhum double booking por lavador, balanceamento ≤ 2
+7. Gerar saída
+
+## FORMATO DE SAÍDA
+
+IMPORTANTE: Responda APENAS com JSON válido (sem markdown, sem backticks, sem texto adicional antes ou depois).
+
+O JSON deve seguir EXATAMENTE este schema:
+{
+  "reasoning": "Resumo do raciocínio da alocação, explicando decisões e trade-offs",
+  "summary": "Distribuição: X-X-X-X-X-X",
+  "alerts": ["alerta 1", "alerta 2"],
+  "assignments": [
+    {
+      "washer": "Nome do Lavador",
+      "region": "Região base",
+      "services": [
+        {
+          "time": "08:15",
+          "client": "Nome do Cliente",
+          "address": "Endereço completo",
+          "condo": "Nome do Condomínio",
+          "vehicle": "Modelo do Veículo",
+          "wash_type": "Lavagem Completa",
+          "notes": "observações ou string vazia"
+        }
+      ]
+    }
+  ]
+}
+
+NÃO incluir nos dados: valores (R$), status de assinante, repasses, bônus.
+Os services de cada lavador devem estar ordenados por horário.
+Se houver double booking, incluir nos alerts E no assignments com washer "DOUBLE BOOKING".
+`;
+
+const CLOCKS = {
+  '07:00':'🕖','07:15':'🕖','07:30':'🕖','07:45':'🕖',
+  '08:00':'🕗','08:15':'🕗','08:30':'🕣','08:45':'🕗',
+  '09:00':'🕘','09:15':'🕘','09:30':'🕤','09:45':'🕘',
+  '10:00':'🕙','10:15':'🕙','10:30':'🕥','10:45':'🕙',
+  '11:00':'🕚','11:15':'🕦','11:30':'🕦','11:45':'🕦',
+  '12:00':'🕛','12:15':'🕧','12:30':'🕧','12:45':'🕧',
+  '13:00':'🕐','13:15':'🕐','13:30':'🕜','13:45':'🕐',
+  '14:00':'🕑','14:15':'🕑','14:30':'🕝','14:45':'🕑',
+  '15:00':'🕒','15:15':'🕒','15:30':'🕞','15:45':'🕒',
+  '16:00':'🕓','16:15':'🕟','16:30':'🕟','16:45':'🕓',
+  '17:00':'🕔','17:15':'🕔','17:30':'🕠','17:45':'🕔',
+  '18:00':'🕕','18:15':'🕕','18:30':'🕡','18:45':'🕕',
+};
+
+const DEFAULT_LAVADORES = ['Gabriel','Bruno','Diego','William','Ricardo','Carradini'];
+
+let sendParsedServices = [];
+let buildParsedServices = [];
+
+// ==================== PIN ====================
+document.querySelectorAll('.pin-input input').forEach((inp,i,arr) => {
+  inp.addEventListener('input', () => { if(inp.value.length===1 && i<arr.length-1) arr[i+1].focus(); });
+  inp.addEventListener('keydown', (e) => {
+    if(e.key==='Backspace' && inp.value==='' && i>0) arr[i-1].focus();
+    if(e.key==='Enter') checkPin();
+  });
+});
+
+function checkPin() {
+  const pin = ['p1','p2','p3','p4'].map(id=>document.getElementById(id).value).join('');
+  if(pin===CORRECT_PIN) {
+    document.getElementById('pin-screen').style.display='none';
+    document.getElementById('app-screen').style.display='block';
+    // Init sheet tables if not yet initialized
+    if(!document.getElementById('send-sheet-header').children.length) initSheetTable('send');
+    if(!document.getElementById('build-sheet-header').children.length) initSheetTable('build');
+  } else {
+    document.getElementById('pin-error').textContent='PIN incorreto.';
+    document.querySelectorAll('.pin-input input').forEach(i=>{i.value='';});
+    document.getElementById('p1').focus();
+  }
+}
+
+function logout() {
+  document.getElementById('pin-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
+  document.querySelectorAll('.pin-input input').forEach(i=>{i.value='';});
+  document.getElementById('pin-error').textContent='';
+  document.getElementById('p1').focus();
+}
+
+// ==================== NAVIGATION ====================
+function goTo(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(`screen-${screen}`).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(screen === 'build') initLavadorState();
+  if(screen === 'pay') payInit();
+}
+
+// ==================== SHEET TABLE ====================
+const SHEET_COLS = [
+  { key:'concatenar',  label:'Concat.',       use:false },
+  { key:'prestador',   label:'Prestador',     use:true  },
+  { key:'rg_prest',    label:'RG Prest.',     use:false },
+  { key:'horario',     label:'Horário',       use:true  },
+  { key:'nome_cli',    label:'Cliente',       use:true  },
+  { key:'telefone',    label:'Telefone',      use:false },
+  { key:'endereco',    label:'Endereço',      use:true  },
+  { key:'lavagem',     label:'Lavagem',       use:true  },
+  { key:'veiculo',     label:'Veículo',       use:true  },
+  { key:'status',      label:'Status',        use:false },
+  { key:'id_user',     label:'ID User',       use:false },
+  { key:'valor',       label:'Valor',         use:false },
+  { key:'reservado',   label:'Reservado',     use:false },
+  { key:'tipo_veic',   label:'Tipo Veíc.',    use:false },
+  { key:'tel_horario', label:'Tel+Hor.',      use:false },
+  { key:'prest2',      label:'Prest. 2',      use:false },
+  { key:'rg_prest2',   label:'RG Pr. 2',      use:false },
+  { key:'obs',         label:'Observação',    use:true  },
+  { key:'condo',       label:'Condomínio',    use:true  },
+  { key:'voltagem',    label:'Voltagem',      use:true  },
+  { key:'calibragem',  label:'Calibr.',       use:false },
+];
+const TOTAL_SHEET_COLS = SHEET_COLS.length;
+
+function initSheetTable(flow) {
+  // Build header
+  const headerRow = document.getElementById(`${flow}-sheet-header`);
+  headerRow.innerHTML = '<th class="col-ignore" style="width:30px">#</th>';
+  SHEET_COLS.forEach(col => {
+    headerRow.innerHTML += `<th class="${col.use ? 'col-use' : 'col-ignore'}">${col.label}</th>`;
+  });
+
+  // Add initial empty rows
+  const tbody = document.getElementById(`${flow}-sheet-body`);
+  tbody.innerHTML = '';
+  for(let i = 0; i < 8; i++) tbody.appendChild(createSheetRow(flow, i + 1));
+
+  // Paste listener on the table
+  document.getElementById(`${flow}-sheet-table`).addEventListener('paste', function(e) {
+    e.preventDefault();
+    handleTablePaste(e, flow);
+  });
+}
+
+function createSheetRow(flow, num) {
+  const tr = document.createElement('tr');
+  const numTd = document.createElement('td');
+  numTd.className = 'col-ignore';
+  numTd.textContent = num;
+  numTd.style.textAlign = 'center';
+  numTd.style.fontSize = '10px';
+  numTd.style.color = 'var(--text2)';
+  tr.appendChild(numTd);
+
+  for(let i = 0; i < TOTAL_SHEET_COLS; i++) {
+    const td = document.createElement('td');
+    td.className = SHEET_COLS[i].use ? 'col-use' : 'col-ignore';
+    td.contentEditable = 'true';
+    td.dataset.col = i;
+    tr.appendChild(td);
+  }
+  return tr;
+}
+
+function addSheetRows(flow, n) {
+  const tbody = document.getElementById(`${flow}-sheet-body`);
+  const currentCount = tbody.children.length;
+  for(let i = 0; i < n; i++) tbody.appendChild(createSheetRow(flow, currentCount + i + 1));
+}
+
+function handleTablePaste(e, flow) {
+  const clipboardData = e.clipboardData || window.clipboardData;
+
+  // Try HTML first (Google Sheets sends HTML table)
+  let pastedRows = [];
+  const html = clipboardData.getData('text/html');
+  if(html && html.includes('<t')) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    doc.querySelectorAll('tr').forEach(tr => {
+      const cells = [];
+      tr.querySelectorAll('td, th').forEach(td => {
+        cells.push(td.textContent.replace(/\s+/g, ' ').trim());
+      });
+      if(cells.length > 0) pastedRows.push(cells);
+    });
+  }
+
+  // Fallback: plain text
+  if(pastedRows.length === 0) {
+    const text = clipboardData.getData('text/plain');
+    if(text) {
+      const rawLines = text.split('\n');
+      const reconstituted = [];
+      rawLines.forEach(line => {
+        if(!line.trim()) return;
+        const tabs = (line.match(/\t/g) || []).length;
+        const hasSched = /\d{2}\/\d{2}\s*às\s*\d{2}:\d{2}/.test(line);
+        if(tabs >= 5 && hasSched) {
+          reconstituted.push(line);
+        } else if(reconstituted.length > 0) {
+          reconstituted[reconstituted.length - 1] += ' ' + line.trim();
+        }
+      });
+      pastedRows = reconstituted.map(l => l.split('\t'));
+    }
+  }
+
+  if(pastedRows.length === 0) return;
+
+  // Find target row
+  let targetRow = 0;
+  const sel = window.getSelection();
+  if(sel.anchorNode) {
+    const node = sel.anchorNode.nodeType === 3 ? sel.anchorNode.parentElement : sel.anchorNode;
+    const td = node.closest ? node.closest('td') : null;
+    if(td) {
+      const tr = td.parentElement;
+      const tbody = document.getElementById(`${flow}-sheet-body`);
+      const idx = [...tbody.children].indexOf(tr);
+      if(idx >= 0) targetRow = idx;
+    }
+  }
+
+  const tbody = document.getElementById(`${flow}-sheet-body`);
+
+  // Ensure enough rows
+  while(tbody.children.length < targetRow + pastedRows.length) {
+    tbody.appendChild(createSheetRow(flow, tbody.children.length + 1));
+  }
+
+  // Fill data
+  pastedRows.forEach((cells, ri) => {
+    const tr = tbody.children[targetRow + ri];
+    if(!tr) return;
+    const tds = tr.querySelectorAll('td[contenteditable]');
+    cells.forEach((val, ci) => {
+      if(ci < tds.length) tds[ci].textContent = val;
+    });
+  });
+
+  updateSheetCount(flow);
+  parseSheetTable(flow);
+}
+
+function updateSheetCount(flow) {
+  const tbody = document.getElementById(`${flow}-sheet-body`);
+  const filled = [...tbody.children].filter(tr => {
+    const cells = tr.querySelectorAll('td[contenteditable]');
+    return [...cells].some(c => c.textContent.trim() !== '');
+  }).length;
+  document.getElementById(`${flow}-row-label`).textContent = `${filled} linha(s) com dados`;
+}
+
+function parseSheetTable(flow) {
+  const tbody = document.getElementById(`${flow}-sheet-body`);
+  const services = [];
+  const errors = [];
+
+  [...tbody.children].forEach((tr, idx) => {
+    const cells = tr.querySelectorAll('td[contenteditable]');
+    const v = [...cells].map(c => c.textContent.trim());
+
+    const client = v[4] || '';
+    const vehicle = v[8] || '';
+    if(!client && !vehicle) return;
+
+    const horario = v[3] || '';
+    const timeMatch = horario.match(/(\d{2}\/\d{2})\s*às\s*(\d{2}:\d{2})/);
+    let date = '', time = '';
+    if(timeMatch) { date = timeMatch[1]; time = timeMatch[2]; }
+    else { const jt = horario.match(/(\d{2}:\d{2})/); if(jt) time = jt[1]; }
+
+    let allObs = [];
+    const obs = v[17] || '';
+    const volt = v[19] || '';
+    if(obs) allObs.push(obs);
+    if(volt && /\d+v/i.test(volt)) allObs.push(volt);
+
+    services.push({
+      prestador: v[1] || '', date, time, cliente: client,
+      endereco: v[6] || '', lavagem: v[7] || 'Lavagem Completa',
+      veiculo: vehicle, obs: allObs.join('. '),
+      condo: v[18] || '', telefone: v[5] || ''
+    });
+  });
+
+  const container = document.getElementById(`${flow}-parse-result`);
+
+  if(services.length === 0) {
+    container.innerHTML = '';
+    if(flow === 'send') { sendParsedServices = []; document.getElementById('send-step2').style.display = 'none'; }
+    else { buildParsedServices = []; document.getElementById('build-step2').style.display = 'none'; document.getElementById('build-step3').style.display = 'none'; }
+    return;
+  }
+
+  const byWasher = {};
+  services.forEach(s => { const k=s.prestador||'Sem nome'; if(!byWasher[k])byWasher[k]=[]; byWasher[k].push(s); });
+
+  let html = `<div class="badge success">✅ ${services.length} serviço(s) — ${Object.keys(byWasher).length} lavador(es)</div>`;
+  if(errors.length) html += `<div class="badge warning" style="margin-left:8px">⚠️ ${errors.length} ignorada(s)</div>`;
+  container.innerHTML = html;
+
+  if(flow === 'send') {
+    sendParsedServices = services;
+    document.getElementById('send-step2').style.display = 'block';
+    document.getElementById('send-step3').style.display = 'none';
+  } else {
+    buildParsedServices = services;
+    document.getElementById('build-step2').style.display = 'block';
+    document.getElementById('build-step3').style.display = 'block';
+    document.getElementById('build-result').style.display = 'none';
+    initLavadorState();
+  }
+}
+
+function clearSheet(flow) {
+  const tbody = document.getElementById(`${flow}-sheet-body`);
+  tbody.innerHTML = '';
+  for(let i = 0; i < 8; i++) tbody.appendChild(createSheetRow(flow, i + 1));
+  document.getElementById(`${flow}-row-label`).textContent = '0 linha(s) com dados';
+  document.getElementById(`${flow}-parse-result`).innerHTML = '';
+
+  if(flow === 'send') {
+    sendParsedServices = [];
+    document.getElementById('send-step2').style.display = 'none';
+    document.getElementById('send-step3').style.display = 'none';
+  } else {
+    buildParsedServices = [];
+    document.getElementById('build-step2').style.display = 'none';
+    document.getElementById('build-step3').style.display = 'none';
+    document.getElementById('build-result').style.display = 'none';
+  }
+}
+
+function sendGenerate() {
+  if(!sendParsedServices.length) return;
+
+  const byWasher = {};
+  sendParsedServices.forEach(s => { const k=s.prestador||'Sem nome'; if(!byWasher[k])byWasher[k]=[]; byWasher[k].push(s); });
+
+  const opts = {
+    aguardando: document.getElementById('send-chk-aguardando').checked,
+    deslocamento: document.getElementById('send-chk-desl').checked,
+    deslVal: document.getElementById('send-desl-amount').value.trim(),
+    custom: document.getElementById('send-chk-custom').checked,
+    customMsg: document.getElementById('send-custom-msg').value.trim()
+  };
+
+  const container = document.getElementById('send-output');
+  container.innerHTML = '';
+
+  Object.keys(byWasher).forEach(wName => {
+    const services = byWasher[wName].sort((a,b) => a.time.localeCompare(b.time));
+    const msg = buildWhatsAppMessage(firstName(wName), services[0].date, services, opts);
+    container.appendChild(createOutputBlock(firstName(wName), services.length, services[0].date, msg));
+  });
+
+  document.getElementById('send-step3').style.display = 'block';
+  document.getElementById('send-step3').scrollIntoView({behavior:'smooth'});
+}
+
+function sendReset() {
+  clearSheet('send');
+  document.getElementById('send-step2').style.display = 'none';
+  document.getElementById('send-step3').style.display = 'none';
+  ['send-chk-aguardando','send-chk-desl','send-chk-custom'].forEach(id => document.getElementById(id).checked = false);
+  document.getElementById('send-desl-val').classList.remove('show');
+  document.getElementById('send-custom-val').classList.remove('show');
+  sendParsedServices = [];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ==================== FLOW 2: BUILD (AI) ====================
+const STANDARD_HOURS = ['08:15','10:45','13:15','15:30'];
+let lavadorState = []; // [{name, active, hours: {08:15:true, ...}}]
+
+function initLavadorState() {
+  let names = [...DEFAULT_LAVADORES];
+  if(buildParsedServices.length) {
+    const fromData = [...new Set(buildParsedServices.map(s => s.prestador).filter(Boolean))];
+    fromData.forEach(n => {
+      if(!names.some(d => d.toLowerCase() === n.toLowerCase())) names.push(n);
+    });
+  }
+
+  // Preserve existing state if names match
+  const existing = new Map(lavadorState.map(l => [l.name.toLowerCase(), l]));
+  lavadorState = names.map(n => {
+    const prev = existing.get(n.toLowerCase());
+    if(prev) return prev;
+    const hours = {};
+    STANDARD_HOURS.forEach(h => hours[h] = true);
+    return { name: firstName(n), active: true, hours };
+  });
+
+  renderLavadorList();
+}
+
+function renderLavadorList() {
+  const list = document.getElementById('lavador-list');
+  list.innerHTML = lavadorState.map((l, idx) => {
+    const activeClass = l.active ? 'active' : 'inactive';
+    const toggleClass = l.active ? 'on' : '';
+    const availCount = l.active ? Object.values(l.hours).filter(Boolean).length : 0;
+    const statusText = !l.active ? '❌ Indisponível' :
+      availCount === STANDARD_HOURS.length ? '✅ Dia inteiro' :
+      availCount === 0 ? '⚠️ Sem horários' :
+      `⏰ ${availCount} de ${STANDARD_HOURS.length} horários`;
+
+    let hoursHtml = '';
+    if(l.active) {
+      hoursHtml = `<div class="lavador-hours">${STANDARD_HOURS.map(h => {
+        const cls = l.hours[h] ? 'on' : 'off';
+        return `<span class="hour-chip ${cls}" onclick="toggleHour(${idx},'${h}')">${h}</span>`;
+      }).join('')}</div>`;
+    }
+
+    const isDefault = DEFAULT_LAVADORES.some(d => firstName(d).toLowerCase() === l.name.toLowerCase());
+
+    return `<div class="lavador-card ${activeClass}">
+      <div class="lavador-top">
+        <div class="lavador-left">
+          <button class="lavador-toggle ${toggleClass}" onclick="toggleLavador(${idx})"></button>
+          <span class="lavador-name">${esc(l.name)}</span>
+        </div>
+        <span class="lavador-status">${statusText}</span>
+        ${!isDefault ? `<button class="lavador-remove" onclick="removeLavador(${idx})" title="Remover">✕</button>` : ''}
+      </div>
+      ${hoursHtml}
+    </div>`;
+  }).join('');
+}
+
+function toggleLavador(idx) {
+  lavadorState[idx].active = !lavadorState[idx].active;
+  if(lavadorState[idx].active) {
+    // Re-enable all hours when toggling back on
+    STANDARD_HOURS.forEach(h => lavadorState[idx].hours[h] = true);
+  }
+  renderLavadorList();
+}
+
+function toggleHour(idx, hour) {
+  lavadorState[idx].hours[hour] = !lavadorState[idx].hours[hour];
+  renderLavadorList();
+}
+
+function addLavador() {
+  const input = document.getElementById('new-lavador-name');
+  const name = input.value.trim();
+  if(!name) return;
+  if(lavadorState.some(l => l.name.toLowerCase() === name.toLowerCase())) {
+    alert('Lavador já existe na lista.');
+    return;
+  }
+  const hours = {};
+  STANDARD_HOURS.forEach(h => hours[h] = true);
+  lavadorState.push({ name: firstName(name), active: true, hours });
+  input.value = '';
+  renderLavadorList();
+}
+
+function removeLavador(idx) {
+  const name = lavadorState[idx].name;
+  if(!confirm(`Remover ${name} da lista?`)) return;
+  lavadorState.splice(idx, 1);
+  renderLavadorList();
+}
+
+function getAvailableLavadores() {
+  return lavadorState
+    .filter(l => l.active && Object.values(l.hours).some(Boolean))
+    .map(l => {
+      const blocked = STANDARD_HOURS.filter(h => !l.hours[h]);
+      if(blocked.length === 0) return l.name;
+      return `${l.name} (indisponível: ${blocked.join(', ')})`;
+    });
+}
+
+function buildParse() {
+  const raw = document.getElementById('build-paste').value;
+  const container = document.getElementById('build-parse-result');
+  if(!raw.trim()) { container.innerHTML=''; document.getElementById('build-step2').style.display='none'; document.getElementById('build-step3').style.display='none'; buildParsedServices=[]; return; }
+
+  const {services, errors} = parseSheetData(raw);
+  buildParsedServices = services;
+  const ok = renderParseResult(container, services, errors);
+  document.getElementById('build-step2').style.display = ok ? 'block' : 'none';
+  document.getElementById('build-step3').style.display = ok ? 'block' : 'none';
+  document.getElementById('build-result').style.display = 'none';
+  if(ok) initLavadorState();
+}
+
+async function buildGenerate() {
+  if(!buildParsedServices.length) { alert('Cole os agendamentos primeiro.'); return; }
+
+  const available = getAvailableLavadores();
+  if(!available.length) { alert('Selecione pelo menos um lavador disponível.'); return; }
+
+  const aguardando = document.getElementById('build-chk-aguardando').checked;
+
+  // Build availability in prompt v5 format
+  const date = buildParsedServices[0]?.date || 'XX/XX';
+
+  const availLines = lavadorState.map(l => {
+    if(!l.active) return `${l.name}: indisponível`;
+    const avail = STANDARD_HOURS.filter(h => l.hours[h]);
+    const blocked = STANDARD_HOURS.filter(h => !l.hours[h]);
+    if(blocked.length === 0) return `${l.name}: disponível dia todo`;
+    const hasMorning = l.hours['08:15'] && l.hours['10:45'];
+    const hasAfternoon = l.hours['13:15'] && l.hours['15:30'];
+    if(hasMorning && !hasAfternoon) return `${l.name}: disponível manhã`;
+    if(!hasMorning && hasAfternoon) return `${l.name}: disponível tarde`;
+    return `${l.name}: disponível apenas horários ${avail.join(', ')} | bloqueado: ${blocked.join(', ')}`;
+  }).join('\n');
+
+  // Build service list
+  const servicesSummary = buildParsedServices.map((s,i) =>
+    `${i+1}. ${s.date} às ${s.time} | ${s.cliente} | ${s.endereco} | Cond: ${s.condo} | ${s.veiculo} | ${s.lavagem}${s.obs ? ' | Obs: '+s.obs : ''}`
+  ).join('\n');
+
+  const userMessage = `DATA: ${date}
+
+DISPONIBILIDADE:
+${availLines}
+
+AGENDAMENTOS DO DIA (${buildParsedServices.length} total):
+${servicesSummary}
+${aguardando ? '\nNOTA: Agenda preliminar — aguardando novos agendamentos, adicionar aviso "⏳ Estamos aguardando novas lavagens para completar sua agenda de hoje." nas mensagens de lavadores com apenas 1 agendamento.' : ''}`;
+
+  // Show loading
+  document.getElementById('build-step3').style.display = 'none';
+  document.getElementById('build-result').style.display = 'none';
+  document.getElementById('build-loading').style.display = 'block';
+  document.getElementById('build-loading').scrollIntoView({behavior:'smooth'});
+
+  try {
+    const response = await fetch(SUPABASE_FN_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-app-pin': CORRECT_PIN,
+      },
+      body: JSON.stringify({
+        system: SYSTEM_PROMPT,
+        userMessage: userMessage,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 8000,
+      })
+    });
+
+    const data = await response.json();
+
+    if(data.error) {
+      throw new Error(data.error.message || data.error || 'Erro na API');
+    }
+
+    const fullText = data.content.map(c => c.text || '').join('').trim();
+
+    // Try to parse JSON response
+    let result = null;
+    try {
+      const clean = fullText.replace(/```json\s*/g,'').replace(/```\s*/g,'').trim();
+      result = JSON.parse(clean);
+    } catch(e) {
+      // Try extracting JSON from <JSON> tags as fallback
+      const jsonMatch = fullText.match(/<JSON>([\s\S]*?)<\/JSON>/);
+      if(jsonMatch) {
+        try { result = JSON.parse(jsonMatch[1].trim()); } catch(e2) {}
+      }
+    }
+
+    // If no JSON parsed, show raw response
+    if(!result) {
+      document.getElementById('build-loading').style.display = 'none';
+      document.getElementById('build-result').style.display = 'block';
+      document.getElementById('build-ai-reasoning').innerHTML = `<div class="badge warning">⚠️ Resposta em formato livre (copie manualmente):</div>`;
+      document.getElementById('build-output').innerHTML = `<div class="output-box">${esc(fullText)}</div>
+        <div class="output-actions"><button class="btn btn-copy" onclick="copyRaw(this)">📋 Copiar Tudo</button></div>`;
+      return;
+    }
+
+    // Render structured result
+    document.getElementById('build-loading').style.display = 'none';
+    document.getElementById('build-result').style.display = 'block';
+
+    // Reasoning + Summary + Alerts
+    let reasoningHtml = '';
+    if(result.reasoning) {
+      reasoningHtml += `<div class="badge info">🧠 Raciocínio</div>
+        <div style="color:var(--text2);font-size:13px;line-height:1.6;padding:12px 16px;background:var(--bg);border-radius:10px;margin-top:8px">${esc(result.reasoning)}</div>`;
+    }
+    if(result.summary) {
+      reasoningHtml += `<div style="margin-top:8px;padding:8px 16px;background:var(--surface2);border-radius:8px;font-size:13px;font-weight:600;color:var(--accent)">📋 ${esc(result.summary)}</div>`;
+    }
+    if(result.alerts && result.alerts.length) {
+      reasoningHtml += `<div class="badge warning" style="margin-top:12px">⚠️ Alertas</div>`;
+      result.alerts.forEach(a => {
+        reasoningHtml += `<div style="color:var(--orange);font-size:13px;padding:4px 16px">• ${esc(a)}</div>`;
+      });
+    }
+    document.getElementById('build-ai-reasoning').innerHTML = reasoningHtml;
+
+    // Build output messages
+    const outContainer = document.getElementById('build-output');
+    outContainer.innerHTML = '';
+
+    const opts = {
+      aguardando: aguardando,
+      deslocamento: false, deslVal: '',
+      custom: false, customMsg: ''
+    };
+
+    (result.assignments || []).forEach(a => {
+      const wName = a.washer;
+      const svcs = (a.services || []).sort((x,y) => (x.time||'').localeCompare(y.time||''));
+
+      const mapped = svcs.map(s => ({
+        time: s.time || '', cliente: s.client || '',
+        endereco: s.address || '', condo: s.condo || '',
+        veiculo: s.vehicle || '', lavagem: s.wash_type || 'Lavagem Completa',
+        obs: s.notes || ''
+      }));
+
+      const msg = buildWhatsAppMessage(firstName(wName), date, mapped, opts);
+      outContainer.appendChild(createOutputBlock(firstName(wName), svcs.length, date, msg));
+    });
+
+    document.getElementById('build-result').scrollIntoView({behavior:'smooth'});
+
+  } catch(err) {
+    document.getElementById('build-loading').style.display = 'none';
+    document.getElementById('build-step3').style.display = 'block';
+    alert(`Erro ao chamar IA: ${err.message}\n\nVerifique a conexão e tente novamente.`);
+  }
+}
+
+function buildReset() {
+  clearSheet('build');
+  document.getElementById('build-step2').style.display = 'none';
+  document.getElementById('build-step3').style.display = 'none';
+  document.getElementById('build-loading').style.display = 'none';
+  document.getElementById('build-result').style.display = 'none';
+  document.getElementById('build-chk-aguardando').checked = false;
+  buildParsedServices = [];
+  lavadorState = [];
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ==================== SHARED MESSAGE BUILDER ====================
+function buildWhatsAppMessage(washerName, dateStr, services, opts) {
+  let msg = `Olá, ${washerName}! Tudo certo? Segue sua agenda para ${dateStr} ✅`;
+
+  if(opts.aguardando) msg += `\nEstamos aguardando novos agendamentos para completar a sua agenda.`;
+  if(opts.deslocamento) msg += opts.deslVal ? `\nEssa agenda terá ajuda de deslocamento de ${opts.deslVal}.` : `\nEssa agenda terá ajuda de deslocamento.`;
+  if(opts.custom && opts.customMsg) msg += `\n${opts.customMsg}`;
+
+  services.forEach(s => {
+    const clock = CLOCKS[s.time] || '🕐';
+    const vEmoji = isMoto(s.veiculo) ? '🏍️' : '🚘';
+
+    msg += `\n\n${clock} ${s.time} – ${s.cliente}`;
+
+    if(s.endereco || s.condo) {
+      let addr = '📍 ';
+      if(s.endereco) addr += fmtAddr(s.endereco);
+      if(s.condo) {
+        if(s.endereco) addr += ` — Condomínio: ${fmtCondo(s.condo)}`;
+        else addr += `Condomínio: ${fmtCondo(s.condo)}`;
+      }
+      msg += `\n${addr}`;
+    }
+
+    msg += `\n${vEmoji} ${capVehicle(s.veiculo)} (${capFirst(s.lavagem)})`;
+    if(s.obs) msg += `\n⚠️ ${s.obs}`;
+  });
+
+  msg += `\n\nConfira o Guia para Lavadores: https://www.lavago.com.br/guia-prestadores`;
+  msg += `\n\nPor favor, confirme o recebimento respondendo com "ok".`;
+
+  return msg;
+}
+
+function createOutputBlock(name, count, date, msg) {
+  const id = 'out-' + slug(name) + '-' + Date.now() + Math.random().toString(36).substr(2,4);
+  const block = document.createElement('div');
+  block.className = 'washer-output';
+  block.innerHTML = `
+    <div class="washer-output-header">
+      <span class="washer-output-name">📋 ${esc(name)}</span>
+      <span class="washer-output-count">${count} serviço(s) — ${date}</span>
+    </div>
+    <div class="output-box" id="${id}">${esc(msg)}</div>
+    <div class="output-actions">
+      <button class="btn btn-copy" onclick="copyMsg(this,'${id}')">📋 Copiar</button>
+    </div>
+  `;
+  return block;
+}
+
+// ==================== COPY ====================
+function copyMsg(btn, outId) {
+  const text = document.getElementById(outId).textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent='✅ Copiado!'; btn.classList.add('copied'); showToast();
+    setTimeout(()=>{btn.textContent='📋 Copiar';btn.classList.remove('copied')},2000);
+  }).catch(()=>{
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast();
+  });
+}
+
+function copyRaw(btn) {
+  const text = document.querySelector('#build-output .output-box')?.textContent || '';
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.textContent='✅ Copiado!';btn.classList.add('copied');showToast();
+    setTimeout(()=>{btn.textContent='📋 Copiar Tudo';btn.classList.remove('copied')},2000);
+  });
+}
+
+function showToast() {
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ==================== FLOW 3: PAYMENT ====================
+const PAY_DEFAULTS = [
+  { name:'Gabriel',         priceVeic:50, pricePickup:60, comodatoPerWash:0,  minSemanal:900, minAbatComodato:0   },
+  { name:'Bruno',           priceVeic:50, pricePickup:60, comodatoPerWash:0,  minSemanal:550, minAbatComodato:0   },
+  { name:'Diego',           priceVeic:50, pricePickup:60, comodatoPerWash:0,  minSemanal:550, minAbatComodato:0   },
+  { name:'William',         priceVeic:50, pricePickup:60, comodatoPerWash:8,  minSemanal:550, minAbatComodato:88  },
+  { name:'Ricardo',         priceVeic:50, pricePickup:60, comodatoPerWash:0,  minSemanal:850, minAbatComodato:0   },
+  { name:'Carradini',       priceVeic:50, pricePickup:60, comodatoPerWash:8,  minSemanal:750, minAbatComodato:100 },
+  { name:'Gabriel Bregaid', priceVeic:60, pricePickup:75, comodatoPerWash:0,  minSemanal:400, minAbatComodato:0   },
+];
+let payWashers = [];
+
+function payInit() {
+  payWashers = PAY_DEFAULTS.map(w => ({...w}));
+  payRenderAll();
+}
+
+function payRenderAll() {
+  const container = document.getElementById('pay-cards');
+  container.innerHTML = '';
+  payWashers.forEach((w, idx) => payRenderCard(idx));
+}
+
+function payRenderCard(idx) {
+  const container = document.getElementById('pay-cards');
+  const w = payWashers[idx];
+  const hasComodato = w.comodatoPerWash > 0;
+  let card = document.getElementById(`pay-card-${idx}`);
+  if(!card) { card = document.createElement('div'); card.id = `pay-card-${idx}`; container.appendChild(card); }
+  card.className = 'section-card'; card.style.marginBottom = '16px';
+  card.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:6px;flex:1">
+        <input type="text" id="pay-name-${idx}" value="${w.name}" onchange="payWashers[${idx}].name=this.value"
+          style="font-weight:700;font-size:16px;background:transparent;border:1px solid transparent;padding:4px 8px;border-radius:6px;width:auto;max-width:200px"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='transparent'">
+        <button onclick="payRemoveWasher(${idx})" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2)" title="Remover">✕</button>
+      </div>
+      <div id="pay-total-badge-${idx}" style="font-weight:700;font-size:18px;color:var(--text2)">R$ 0,00</div>
+    </div>
+
+    <!-- CONFIGURAÇÃO: sempre visível -->
+    <div style="padding:10px 12px;background:var(--bg);border-radius:10px;border:1px solid var(--border);margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">⚙ Configuração</div>
+      <div class="pay-row" style="grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div class="pay-group"><label>R$/Veículo</label>
+          <input type="number" id="pay-cfg-pveic-${idx}" value="${w.priceVeic}" step="0.01" onchange="payWashers[${idx}].priceVeic=parseFloat(this.value)||50;payCalcRow(${idx})"></div>
+        <div class="pay-group"><label>R$/Pickup</label>
+          <input type="number" id="pay-cfg-ppick-${idx}" value="${w.pricePickup}" step="0.01" onchange="payWashers[${idx}].pricePickup=parseFloat(this.value)||60;payCalcRow(${idx})"></div>
+        <div class="pay-group"><label>Mínimo Semanal (R$)</label>
+          <input type="number" id="pay-cfg-min-${idx}" value="${w.minSemanal}" step="0.01" onchange="payWashers[${idx}].minSemanal=parseFloat(this.value)||0;payCalcRow(${idx})"></div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <label style="text-transform:none;letter-spacing:0;font-size:13px;display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="pay-cfg-chk-comod-${idx}" ${hasComodato?'checked':''} onchange="payToggleComodato(${idx})" style="width:16px;height:16px">
+          Tem comodato (desconto por lavagem)
+        </label>
+        <div id="pay-cfg-comod-fields-${idx}" style="display:${hasComodato?'grid':'none'};grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div class="pay-group"><label>Desconto por lavagem (R$)</label>
+            <input type="number" id="pay-cfg-comod-lav-${idx}" value="${w.comodatoPerWash}" step="0.01" onchange="payWashers[${idx}].comodatoPerWash=parseFloat(this.value)||0;payCalcRow(${idx})"></div>
+          <div class="pay-group"><label>Mín. desconto semanal (R$)</label>
+            <input type="number" id="pay-cfg-comod-min-${idx}" value="${w.minAbatComodato}" step="0.01" onchange="payWashers[${idx}].minAbatComodato=parseFloat(this.value)||0;payCalcRow(${idx})"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DADOS DA SEMANA -->
+    <div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📊 Dados da Semana</div>
+    <div class="pay-row" style="grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:8px">
+      <div class="pay-group"><label># Veículos</label><input type="number" id="pay-veic-${idx}" value="0" min="0" oninput="payCalcRow(${idx})"></div>
+      <div class="pay-group"><label># Pickup</label><input type="number" id="pay-pick-${idx}" value="0" min="0" oninput="payCalcRow(${idx})"></div>
+      <div class="pay-group"><label>Bônus</label><input type="number" id="pay-bonus-${idx}" value="0" step="0.01" oninput="payCalcRow(${idx})"></div>
+      <div class="pay-group"><label>Combustível</label><input type="number" id="pay-comb-${idx}" value="0" step="0.01" oninput="payCalcRow(${idx})"></div>
+      <div class="pay-group"><label>Desconto</label><input type="number" id="pay-desc-${idx}" value="0" step="0.01" oninput="payCalcRow(${idx})"></div>
+    </div>
+    <div style="margin-top:6px;font-size:12px;color:var(--text2)" id="pay-detail-${idx}"></div>`;
+  payCalcRow(idx);
+}
+
+function payToggleComodato(idx) {
+  const chk=document.getElementById(`pay-cfg-chk-comod-${idx}`).checked;
+  document.getElementById(`pay-cfg-comod-fields-${idx}`).style.display=chk?'block':'none';
+  if(!chk){payWashers[idx].comodatoPerWash=0;payWashers[idx].minAbatComodato=0;}
+  else{payWashers[idx].comodatoPerWash=parseFloat(document.getElementById(`pay-cfg-comod-lav-${idx}`).value)||8;payWashers[idx].minAbatComodato=parseFloat(document.getElementById(`pay-cfg-comod-min-${idx}`).value)||88;}
+  payCalcRow(idx);
+}
+
+function payAddWasher() {
+  const inp=document.getElementById('pay-new-name'); const name=inp.value.trim();
+  if(!name){alert('Digite o nome.');inp.focus();return;}
+  payWashers.push({name,priceVeic:50,pricePickup:60,comodatoPerWash:0,minSemanal:0,minAbatComodato:0});
+  inp.value=''; const idx=payWashers.length-1; payRenderCard(idx);
+  document.getElementById(`pay-config-${idx}`).style.display='block';
+  document.getElementById(`pay-card-${idx}`).scrollIntoView({behavior:'smooth'});
+}
+
+function payRemoveWasher(idx) {
+  if(!confirm(`Remover ${payWashers[idx].name}?`))return;
+  payWashers.splice(idx,1); payRenderAll();
+}
+
+function payCalcRow(idx) {
+  const w=payWashers[idx]; if(!w)return;
+  const el=id=>document.getElementById(id);
+  const veic=parseInt(el(`pay-veic-${idx}`)?.value)||0;
+  const pick=parseInt(el(`pay-pick-${idx}`)?.value)||0;
+  const bonus=parseFloat(el(`pay-bonus-${idx}`)?.value)||0;
+  const comb=parseFloat(el(`pay-comb-${idx}`)?.value)||0;
+  const desconto=parseFloat(el(`pay-desc-${idx}`)?.value)||0;
+  const totalLav=veic+pick; const hasC=w.comodatoPerWash>0;
+  const abatTotal=hasC?w.comodatoPerWash*totalLav:0;
+  const liquido=(veic*w.priceVeic)+(pick*w.pricePickup)+bonus+comb-abatTotal-desconto;
+  const ajusteAbat=hasC&&abatTotal<w.minAbatComodato?w.minAbatComodato-abatTotal:0;
+  const adicMin=liquido<w.minSemanal?w.minSemanal-liquido:0;
+  const total=liquido+adicMin-ajusteAbat;
+  const badge=el(`pay-total-badge-${idx}`);
+  if(badge){badge.textContent=fmtMoney(total);badge.style.color=(totalLav>0||bonus>0||comb>0)?'var(--green)':'var(--text2)';}
+  let d='';
+  if(totalLav>0||bonus>0||comb>0){
+    d=`${veic}×${fmtMoney(w.priceVeic)}`;
+    if(pick>0)d+=` + ${pick}×${fmtMoney(w.pricePickup)}`;
+    if(bonus>0)d+=` + bônus ${fmtMoney(bonus)}`;if(comb>0)d+=` + comb ${fmtMoney(comb)}`;
+    if(desconto>0)d+=` − desc ${fmtMoney(desconto)}`;
+    if(hasC&&abatTotal>0)d+=` − abat ${fmtMoney(abatTotal)}`;
+    d+=` = Líq ${fmtMoney(liquido)}`;
+    if(adicMin>0)d+=` | <span style="color:var(--green)">+${fmtMoney(adicMin)} mín.</span>`;
+    if(ajusteAbat>0)d+=` | <span style="color:var(--orange)">−${fmtMoney(ajusteAbat)} aj.abat.</span>`;
+  }
+  const det=el(`pay-detail-${idx}`); if(det)det.innerHTML=d;
+}
+
+function payGenerateAll() {
+  const periodStart=document.getElementById('pay-period-start').value;
+  const periodEnd=document.getElementById('pay-period-end').value;
+  const payDateText=document.getElementById('pay-date-text').value.trim()||'em breve';
+  if(!periodStart||!periodEnd){alert('Preencha o período.');return;}
+  const [,ms,ds]=periodStart.split('-');const [,me,de]=periodEnd.split('-');
+  const periodStr=`${ds}/${ms} a ${de}/${me}`;
+  const container=document.getElementById('pay-messages'); container.innerHTML=''; let hasAny=false;
+
+  payWashers.forEach((w,idx)=>{
+    const veic=parseInt(document.getElementById(`pay-veic-${idx}`).value)||0;
+    const pick=parseInt(document.getElementById(`pay-pick-${idx}`).value)||0;
+    const bonus=parseFloat(document.getElementById(`pay-bonus-${idx}`).value)||0;
+    const comb=parseFloat(document.getElementById(`pay-comb-${idx}`).value)||0;
+    const desconto=parseFloat(document.getElementById(`pay-desc-${idx}`).value)||0;
+    const totalLav=veic+pick;
+    if(totalLav===0&&bonus===0&&comb===0)return;
+    hasAny=true;
+    const name=document.getElementById(`pay-name-${idx}`).value.trim()||w.name;
+    const hasC=w.comodatoPerWash>0;
+    const abatTotal=hasC?w.comodatoPerWash*totalLav:0;
+    const liquido=(veic*w.priceVeic)+(pick*w.pricePickup)+bonus+comb-abatTotal-desconto;
+    const ajusteAbat=hasC&&abatTotal<w.minAbatComodato?w.minAbatComodato-abatTotal:0;
+    const adicMin=liquido<w.minSemanal?w.minSemanal-liquido:0;
+    const total=liquido+adicMin-ajusteAbat;
+    const veicLiq=hasC?w.priceVeic-w.comodatoPerWash:w.priceVeic;
+    const pickLiq=hasC?w.pricePickup-w.comodatoPerWash:w.pricePickup;
+
+    let msg=`Fala ${firstName(name)}! Tudo certo?\n\nSegue o resumo dos pagamentos da semana de ${periodStr}:\n`;
+    msg+=`\n🚗 ${veic} veículo${veic!==1?'s':''} x ${fmtMoney(veicLiq)} = ${fmtMoney(veic*veicLiq)}`;
+    if(pick>0)msg+=`\n🛻 ${pick} pick-up / veículo grande x ${fmtMoney(pickLiq)} = ${fmtMoney(pick*pickLiq)}`;
+    if(bonus>0)msg+=`\n🎁 Bônus: ${fmtMoney(bonus)}`;
+    if(comb>0)msg+=`\n⛽ Ajuda de combustível: ${fmtMoney(comb)}`;
+    const subLiq=(veic*veicLiq)+(pick*pickLiq)+bonus+comb;
+    if(desconto>0)msg+=`\n➖ Desconto: -${fmtMoney(desconto)}`;
+    msg+=`\n\nTotal: ${fmtMoney(subLiq-desconto)}`;
+    if(adicMin>0){msg+=`\n\n➡️ Mínimo semanal garantido: ${fmtMoney(w.minSemanal)}`;msg+=`\nValor a ser completado para o mínimo: ${fmtMoney(adicMin)}`;}
+    if(ajusteAbat>0)msg+=`\n\n🔧 Ajuste abatimento mínimo comodato: -${fmtMoney(ajusteAbat)}`;
+    msg+=`\n\n💰 Total a receber: ${fmtMoney(total)}`;
+    msg+=`\n\n📅 Pagamento será realizado ${payDateText}.`;
+    if(hasC){
+      msg+=`\n\n🔧 Informativo: O abatimento natural desta semana foi de ${fmtMoney(abatTotal)} (${totalLav} lavagen${totalLav!==1?'s':''} x ${fmtMoney(w.comodatoPerWash)}).`;
+      if(abatTotal>=w.minAbatComodato)msg+=` Como o abatimento mínimo é de ${fmtMoney(w.minAbatComodato)}, não foi necessário completar. Total abatido esta semana: ${fmtMoney(abatTotal)}.`;
+      else msg+=` Como o abatimento mínimo é de ${fmtMoney(w.minAbatComodato)}, foi necessário completar ${fmtMoney(w.minAbatComodato-abatTotal)}. Total abatido esta semana: ${fmtMoney(w.minAbatComodato)}.`;
+    }
+    const boxId=`pay-msg-${idx}`;const block=document.createElement('div');block.style.marginBottom='16px';
+    block.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700">${esc(name)}</span><span style="font-weight:700;color:var(--green)">${fmtMoney(total)}</span></div><div class="output-box" id="${boxId}"></div><div class="output-actions" style="margin-top:8px"><button class="btn btn-copy" onclick="copyMsg(this,'${boxId}')">📋 Copiar</button></div>`;
+    container.appendChild(block);document.getElementById(boxId).textContent=msg;
+  });
+  if(!hasAny){alert('Nenhum lavador tem dados.');return;}
+  document.getElementById('pay-output-all').style.display='block';
+  document.getElementById('pay-output-all').scrollIntoView({behavior:'smooth'});
+}
+
+function payReset() {
+  payWashers.forEach((w,idx)=>{
+    const el=id=>document.getElementById(id);
+    if(el(`pay-veic-${idx}`))el(`pay-veic-${idx}`).value='0';
+    if(el(`pay-pick-${idx}`))el(`pay-pick-${idx}`).value='0';
+    if(el(`pay-bonus-${idx}`))el(`pay-bonus-${idx}`).value='0';
+    if(el(`pay-comb-${idx}`))el(`pay-comb-${idx}`).value='0';
+    if(el(`pay-desc-${idx}`))el(`pay-desc-${idx}`).value='0';
+    payCalcRow(idx);
+  });
+  document.getElementById('pay-output-all').style.display='none';
+  document.getElementById('pay-messages').innerHTML='';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function fmtMoney(v) { return 'R$ '+v.toFixed(2).replace('.',','); }
+
+// ==================== HELPERS ====================
+function esc(s){if(!s)return '';const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function trunc(s,n){return (!s)?'':s.length>n?s.slice(0,n)+'…':s}
+function firstName(full){if(!full)return '';const p=full.trim().split(/\s+/);return p[0].charAt(0).toUpperCase()+p[0].slice(1).toLowerCase()}
+function slug(s){return (s||'').replace(/[^a-zA-Z0-9]/g,'_').toLowerCase()}
+function isMoto(v){return v&&/\b(moto|pcx|cg\s|honda cg|biz|pop|factor|fazer|cb\s|xre|bros)\b/i.test(v)}
+function capVehicle(v){return v?v.replace(/\b\w/g,c=>c.toUpperCase()):''}
+function capFirst(s){return s?s.charAt(0).toUpperCase()+s.slice(1):s}
+function fmtAddr(a){return a?a.replace(/\s+/g,' ').replace(/\s*,\s*/g,', ').trim():''}
+function fmtCondo(c){return c?c.trim().replace(/\b\w/g,x=>x.toUpperCase()):''}
+</script>
+</body>
+</html>
